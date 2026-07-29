@@ -1,16 +1,29 @@
 from flask import Flask, render_template_string, session, redirect, url_for, request
 from datetime import datetime
+import requests
+import razorpay
 
 app = Flask(__name__)
 app.secret_key = 'oms_store_master_key_2026'
 
+# ⬇️ CONFIGURATION SETTINGS ⬇️
+TELEGRAM_BOT_TOKEN = "8988154095: AAEgrUNdKGA_iuQcav4CMi-HR YeOfqsI4Rg"
+TELEGRAM_CHAT_ID = "7867296083"
+
+# Get free test keys from https://dashboard.razorpay.com/
+RAZORPAY_KEY_ID = "rzp_test_YOUR_KEY_ID"
+RAZORPAY_KEY_SECRET = "YOUR_KEY_SECRET"
+
+razorpay_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
+
 COUPONS = {"OM20": 20, "SAVE100": 100}
+USERS = {}  # Temporary user database {email: {name, phone, password}}
 
 PRODUCTS = [
-    {"id": 1, "name": "Sony WH-1000XM5 Wireless Headphones", "category": "Audio", "price": 24999.00, "mrp": 29999.00, "discount": "16% OFF", "rating": 4.8, "reviews": 1240, "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80", "tag": "Bestseller", "description": "Industry-leading noise canceling with two processors and 8 microphones. Magnificent sound quality."},
-    {"id": 2, "name": "Apple Watch Series 9 GPS 45mm", "category": "Wearables", "price": 32900.00, "mrp": 38900.00, "discount": "15% OFF", "rating": 4.9, "reviews": 850, "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80", "tag": "Trending", "description": "S9 SiP enables a super-bright display and a magical new double-tap gesture interaction."},
+    {"id": 1, "name": "Sony WH-1000XM5 Wireless Headphones", "category": "Audio", "price": 24999.00, "mrp": 29999.00, "discount": "16% OFF", "rating": 4.8, "reviews": 1240, "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80", "tag": "Bestseller", "description": "Industry-leading noise canceling with two processors and 8 microphones."},
+    {"id": 2, "name": "Apple Watch Series 9 GPS 45mm", "category": "Wearables", "price": 32900.00, "mrp": 38900.00, "discount": "15% OFF", "rating": 4.9, "reviews": 850, "image": "https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=500&q=80", "tag": "Trending", "description": "S9 SiP enables a super-bright display and double-tap gesture interaction."},
     {"id": 3, "name": "Logitech MX Master 3S Wireless Mouse", "category": "Accessories", "price": 8499.00, "mrp": 9999.00, "discount": "15% OFF", "rating": 4.7, "reviews": 2100, "image": "https://images.unsplash.com/photo-1615663245857-ac93bb7c39e7?w=500&q=80", "tag": "Top Rated", "description": "Ergonomic precision mouse with Quiet Clicks and 8K DPI tracking on glass."},
-    {"id": 4, "name": "JBL Flip 6 Portable Bluetooth Speaker", "category": "Audio", "price": 6999.00, "mrp": 9999.00, "discount": "30% OFF", "rating": 4.6, "reviews": 540, "image": "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&q=80", "tag": "Hot Deal", "description": "Louder, more powerful sound with 2-way speaker system, IP67 waterproof and dustproof design."}
+    {"id": 4, "name": "JBL Flip 6 Portable Bluetooth Speaker", "category": "Audio", "price": 6999.00, "mrp": 9999.00, "discount": "30% OFF", "rating": 4.6, "reviews": 540, "image": "https://images.unsplash.com/photo-1545454675-3531b543be5d?w=500&q=80", "tag": "Hot Deal", "description": "Louder, more powerful sound with IP67 waterproof design."}
 ]
 
 CSS = """<style>
@@ -21,8 +34,8 @@ body{background:var(--bg);color:#1a1a1a;padding-bottom:30px;}
 .nav-top{display:flex;justify-content:space-between;align-items:center;max-width:600px;margin:0 auto;}
 .brand{font-size:1.1rem;font-weight:700;color:#fff;text-decoration:none;display:flex;align-items:center;gap:4px;}
 .brand span{background:var(--secondary);color:#fff;font-size:0.6rem;padding:2px 5px;border-radius:4px;font-weight:800;}
-.nav-actions{display:flex;align-items:center;gap:10px;}
-.nav-btn{color:#fff;text-decoration:none;font-size:0.8rem;font-weight:600;background:rgba(255,255,255,0.15);padding:5px 10px;border-radius:4px;}
+.nav-actions{display:flex;align-items:center;gap:8px;}
+.nav-btn{color:#fff;text-decoration:none;font-size:0.75rem;font-weight:600;background:rgba(255,255,255,0.15);padding:5px 8px;border-radius:4px;}
 .cart-icon{position:relative;color:#fff;text-decoration:none;font-size:1.2rem;}
 .cart-badge{position:absolute;top:-6px;right:-10px;background:var(--secondary);color:#fff;font-size:0.7rem;font-weight:700;border-radius:10px;padding:2px 6px;}
 .categories{display:flex;gap:8px;overflow-x:auto;max-width:600px;margin:10px auto;padding:0 10px;}
@@ -48,12 +61,28 @@ body{background:var(--bg);color:#1a1a1a;padding-bottom:30px;}
 .pay-tab.active{background:#ffebee;border-color:var(--secondary);color:var(--secondary);}
 .pay-sec{display:none;margin-top:10px;padding:12px;background:#fafafa;border:1px solid #eee;border-radius:6px;}
 .pay-sec.active{display:block;}
-input,textarea{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:4px;font-size:0.9rem;}
+input,textarea,select{width:100%;padding:10px;margin:6px 0;border:1px solid #ccc;border-radius:4px;font-size:0.9rem;}
 </style>"""
+
+NAVBAR_HTML = """
+<div class="navbar"><div class="nav-top">
+    <a href="/" class="brand">Om's Store <span>Plus</span></a>
+    <div class="nav-actions">
+        {% if user %}
+            <span style="font-size:0.75rem;font-weight:bold;">👤 {{ user.name.split()[0] }}</span>
+            <a href="/logout" class="nav-btn">Logout</a>
+        {% else %}
+            <a href="/login" class="nav-btn">Login</a>
+        {% endif %}
+        <a href="/orders" class="nav-btn">📦 Orders</a>
+        <a href="/cart" class="cart-icon">🛒<span class="cart-badge" id="cb">{{ cart_count }}</span></a>
+    </div>
+</div></div>
+"""
 
 HOME_HTML = CSS + """
 <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Om's Store Plus</title></head><body>
-<div class="navbar"><div class="nav-top"><a href="/" class="brand">Om's Store <span>Plus</span></a><div class="nav-actions"><a href="/orders" class="nav-btn">📦 My Orders</a><a href="/cart" class="cart-icon">🛒<span class="cart-badge" id="cb">{{ cart_count }}</span></a></div></div></div>
+""" + NAVBAR_HTML + """
 <div class="banner">🎉 Code <strong style="color:#ff6b6b">OM20</strong> for 20% OFF or <strong style="color:#ff6b6b">SAVE100</strong> for ₹100 OFF!</div>
 <div class="categories">
     <a href="/" class="cat-chip {% if selected_cat == 'All' %}active{% endif %}">All Items</a>
@@ -85,112 +114,114 @@ function addCart(id, name){
 }
 </script></body></html>"""
 
+LOGIN_HTML = CSS + """
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Login / Sign Up</title></head><body>
+""" + NAVBAR_HTML + """
+<div class="container" style="margin-top:20px;">
+    <div class="card" style="padding:20px;">
+        <h3 style="margin-bottom:10px;text-align:center;">{{ mode|upper }} TO YOUR ACCOUNT</h3>
+        {% if msg %}<div style="font-size:0.8rem;padding:8px;border-radius:4px;margin-bottom:10px;background:#ffebee;color:var(--secondary);font-weight:bold;">{{ msg }}</div>{% endif %}
+        <form action="/auth" method="POST">
+            <input type="hidden" name="mode" value="{{ mode }}">
+            {% if mode == 'signup' %}
+                <input type="text" name="name" placeholder="Full Name" required>
+                <input type="tel" name="phone" placeholder="Mobile Number" required>
+            {% endif %}
+            <input type="email" name="email" placeholder="Email Address" required>
+            <input type="password" name="password" placeholder="Password" required>
+            <button type="submit" class="add-btn" style="margin-top:10px;padding:12px;font-size:0.9rem;">{{ mode|upper }}</button>
+        </form>
+        <div style="text-align:center;margin-top:15px;font-size:0.85rem;">
+            {% if mode == 'login' %}
+                Don't have an account? <a href="/signup" style="color:var(--secondary);font-weight:bold;">Sign Up</a>
+            {% else %}
+                Already registered? <a href="/login" style="color:var(--secondary);font-weight:bold;">Login</a>
+            {% endif %}
+        </div>
+    </div>
+</div></body></html>"""
+
 PRODUCT_HTML = CSS + """
 <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>{{ p.name }}</title></head><body>
-<div class="navbar"><div class="nav-top"><a href="/" class="brand">← Back to Store</a><a href="/cart" style="color:#fff;text-decoration:none;">🛒 Cart</a></div></div>
+""" + NAVBAR_HTML + """
 <div class="container" style="margin-top:12px;">
     <div class="card">
         <img src="{{ p.image }}" style="width:100%;height:220px;object-fit:contain;margin-bottom:15px;">
         <div style="font-size:1.1rem;font-weight:700;margin-bottom:8px;">{{ p.name }}</div>
         <div style="margin:10px 0;"><span class="price" style="font-size:1.3rem;">₹{{ "%.2f"|format(p.price) }}</span> <span class="mrp">₹{{ "%.2f"|format(p.mrp) }}</span> <span class="discount">{{ p.discount }}</span></div>
         <p style="font-size:0.85rem;color:#555;line-height:1.5;">{{ p.description }}</p>
-        <div style="background:#ffebee;border-left:3px solid var(--secondary);padding:10px;font-size:0.8rem;margin-top:12px;">🔄 <strong>7-Day Easy Returns & Replacements:</strong> Eligible for free return or exchange within 7 days.</div>
+        <div style="background:#ffebee;border-left:3px solid var(--secondary);padding:10px;font-size:0.8rem;margin-top:12px;">🔄 <strong>7-Day Easy Returns:</strong> Free return or exchange within 7 days.</div>
         <button onclick="addCart({{ p.id }}, '{{ p.name }}')" class="add-btn" style="margin-top:12px;">ADD TO CART</button>
     </div>
-    <div style="font-weight:800;font-size:0.95rem;margin:20px 0 10px;color:#555;">YOU MIGHT ALSO LIKE</div>
-    <div class="grid">
-        {% for s in suggestions %}
-        <a href="/product/{{ s.id }}" class="card">
-            <img src="{{ s.image }}" style="width:100%;height:80px;object-fit:contain;">
-            <div style="font-size:0.8rem;font-weight:600;height:2.4em;overflow:hidden;margin-top:5px;">{{ s.name }}</div>
-            <div style="font-size:0.85rem;font-weight:800;color:var(--secondary);margin-top:4px;">₹{{ "%.2f"|format(s.price) }}</div>
-        </a>
-        {% endfor %}
-    </div>
 </div>
-<script>
-function addCart(id, name){ fetch('/api/add/'+id).then(r=>r.json()).then(d=>{ alert('Added to Cart!'); }); }
-</script></body></html>"""
+<script>function addCart(id, name){ fetch('/api/add/'+id).then(r=>r.json()).then(d=>{ alert('Added to Cart!'); }); }</script></body></html>"""
 
 CART_HTML = CSS + """
-<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Checkout</title></head><body>
-<div class="navbar"><div class="nav-top" style="justify-content:center;font-weight:700;">Order Checkout</div></div>
+<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>Checkout</title>
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script></head><body>
+""" + NAVBAR_HTML + """
 <div class="container" style="margin-top:12px;">
     {% if items %}
-    <div class="card" style="margin-bottom:12px;">
-        <div style="font-size:0.85rem;font-weight:800;color:#555;margin-bottom:10px;">APPLY PROMO CODE</div>
-        {% if msg %}<div style="font-size:0.8rem;padding:8px;border-radius:4px;margin-bottom:10px;background:#e8f5e9;color:var(--green);font-weight:bold;">{{ msg }}</div>{% endif %}
-        <form action="/apply_coupon" method="POST" style="display:flex;gap:8px;">
-            <input type="text" name="coupon_code" placeholder="e.g. OM20" value="{{ applied_coupon }}" style="text-transform:uppercase;font-weight:bold;margin:0;">
-            <button type="submit" style="background:var(--primary);color:#fff;border:none;padding:0 16px;border-radius:4px;font-weight:bold;">APPLY</button>
-        </form>
-    </div>
     <div class="card" style="margin-bottom:12px;">
         <div style="font-size:0.85rem;font-weight:800;color:#555;margin-bottom:10px;">PRICE DETAILS</div>
         <div style="display:flex;justify-content:space-between;margin:6px 0;font-size:0.9rem;"><span>Subtotal ({{ items|length }} items)</span><span>₹{{ "%.2f"|format(subtotal) }}</span></div>
         {% if discount > 0 %}<div style="display:flex;justify-content:space-between;margin:6px 0;font-size:0.9rem;color:var(--secondary);font-weight:bold;"><span>Coupon Discount</span><span>-₹{{ "%.2f"|format(discount) }}</span></div>{% endif %}
-        <div style="display:flex;justify-content:space-between;margin:6px 0;font-size:0.9rem;"><span style="color:var(--green);font-weight:bold;">Delivery Fee</span><span style="color:var(--green);font-weight:bold;">FREE</span></div>
         <div style="border-top:2px solid #eee;padding-top:10px;font-size:1.1rem;font-weight:900;display:flex;justify-content:space-between;"><span>Total Payable</span><span>₹{{ "%.2f"|format(total) }}</span></div>
     </div>
     <div class="card">
         <div style="font-size:0.85rem;font-weight:800;color:#555;margin-bottom:10px;">SHIPPING & PAYMENT</div>
-        <form action="/checkout" method="POST">
-            <input type="text" name="name" placeholder="Full Name" required>
-            <input type="tel" name="phone" placeholder="10-Digit Mobile Number" required>
+        <form id="checkoutForm" action="/checkout" method="POST">
+            <input type="text" name="name" placeholder="Full Name" value="{{ user.name if user else '' }}" required>
+            <input type="tel" name="phone" placeholder="10-Digit Mobile Number" value="{{ user.phone if user else '' }}" required>
             <textarea name="address" rows="2" placeholder="Full Delivery Address" required></textarea>
+            
             <div style="font-size:0.85rem;font-weight:800;color:#555;margin:15px 0 10px;">SELECT PAYMENT METHOD</div>
-            <div style="display:flex;gap:8px;margin:10px 0;">
-                <div class="pay-tab active" onclick="sw('card',this)">💳 Card</div>
-                <div class="pay-tab" onclick="sw('upi',this)">📱 UPI</div>
-                <div class="pay-tab" onclick="sw('cod',this)">💵 COD</div>
-            </div>
-            <input type="hidden" name="payment_mode" id="pm" value="Credit / Debit Card">
-            <div id="card_sec" class="pay-sec active"><input type="text" placeholder="Card Number (16 Digits)" maxlength="16"><div style="display:flex;gap:8px;"><input type="text" placeholder="MM/YY" maxlength="5"><input type="password" placeholder="CVV" maxlength="3"></div></div>
-            <div id="upi_sec" class="pay-sec"><input type="text" placeholder="Enter UPI ID (e.g. name@paytm)"></div>
-            <div id="cod_sec" class="pay-sec"><p style="font-size:0.85rem;">Pay cash when your order is delivered to your doorstep.</p></div>
-            <button type="submit" class="add-btn" style="margin-top:12px;padding:14px;font-size:1rem;">PAY ₹{{ "%.2f"|format(total) }} & PLACE ORDER</button>
+            <select name="payment_mode" id="pmSelect">
+                <option value="Online">Online Payment (UPI / Cards / Netbanking)</option>
+                <option value="Cash On Delivery">Cash On Delivery (COD)</option>
+            </select>
+            <button type="submit" class="add-btn" style="margin-top:12px;padding:14px;font-size:1rem;">PROCEED TO PAY ₹{{ "%.2f"|format(total) }}</button>
         </form>
     </div>
     {% else %}<div class="card" style="text-align:center;padding:30px;"><p style="color:#878787;">Your cart is empty!</p></div>{% endif %}
-    <a href="/" style="display:block;text-align:center;color:var(--secondary);font-weight:bold;text-decoration:none;margin-top:15px;">← Continue Shopping</a>
-</div>
-<script>
-function sw(t, e) {
-    document.querySelectorAll('.pay-tab').forEach(x=>x.classList.remove('active'));
-    document.querySelectorAll('.pay-sec').forEach(x=>x.classList.remove('active'));
-    e.classList.add('active');
-    document.getElementById(t+'_sec').classList.add('active');
-    document.getElementById('pm').value = t==='card'?'Credit / Debit Card':(t==='upi'?'UPI / Mobile Wallet':'Cash On Delivery');
-}
-</script></body></html>"""
+</div></body></html>"""
 
 ORDERS_HTML = CSS + """
 <!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1"><title>My Orders</title></head><body>
-<div class="navbar"><div class="nav-top" style="justify-content:center;font-weight:700;">My Orders</div></div>
+""" + NAVBAR_HTML + """
 <div class="container" style="margin-top:12px;">
     {% if orders %}
         {% for o in orders %}
         <div class="card" style="margin-bottom:12px;">
             <div style="display:flex;justify-content:space-between;font-size:0.8rem;color:#888;">
                 <span>{{ o.date }}</span>
-                {% if o.status == 'Cancelled' %}<span style="background:#eee;color:#666;font-weight:bold;padding:3px 8px;border-radius:4px;">Cancelled</span>
-                {% elif o.status == 'Return Requested' %}<span style="background:#eee;color:#666;font-weight:bold;padding:3px 8px;border-radius:4px;">Return Requested</span>
-                {% else %}<span style="background:#ffebee;color:var(--secondary);font-weight:bold;padding:3px 8px;border-radius:4px;">✓ Paid & Confirmed</span>{% endif %}
+                <span style="background:#ffebee;color:var(--secondary);font-weight:bold;padding:3px 8px;border-radius:4px;">{{ o.status }}</span>
             </div>
             <div style="margin:12px 0;">{% for i in o.order_items %}<div style="font-weight:600;">• {{ i.name }} (₹{{ "%.2f"|format(i.price) }})</div>{% endfor %}</div>
-            <div style="font-size:0.8rem;color:#555;line-height:1.5;"><strong>Payment:</strong> {{ o.payment_mode }}<br><strong>Address:</strong> {{ o.address }}</div>
-            <div style="font-weight:800;border-top:1px dashed #ccc;padding-top:10px;margin-top:10px;display:flex;justify-content:space-between;"><span>Total Amount</span><span style="color:var(--secondary);">₹{{ "%.2f"|format(o.total) }}</span></div>
-            {% if o.status == 'Active' %}
-                <div style="margin-top:10px;display:flex;gap:8px;">
-                    <a href="/order/action/{{ loop.index0 }}/cancel" style="background:var(--secondary);color:#fff;font-size:0.75rem;font-weight:bold;padding:6px 12px;border-radius:4px;text-decoration:none;">Cancel Order</a>
-                    <a href="/order/action/{{ loop.index0 }}/return" style="background:#333;color:#fff;font-size:0.75rem;font-weight:bold;padding:6px 12px;border-radius:4px;text-decoration:none;">Request Return</a>
-                </div>
-            {% endif %}
+            <div style="font-size:0.8rem;color:#555;line-height:1.5;"><strong>Customer:</strong> {{ o.name }} ({{ o.phone }})<br><strong>Payment:</strong> {{ o.payment_mode }}<br><strong>Address:</strong> {{ o.address }}</div>
+            <div style="font-weight:800;border-top:1px dashed #ccc;padding-top:10px;margin-top:10px;display:flex;justify-content:space-between;"><span>Total Paid</span><span style="color:var(--secondary);">₹{{ "%.2f"|format(o.total) }}</span></div>
         </div>
         {% endfor %}
     {% else %}<div class="card" style="text-align:center;"><p style="color:#888;">No orders placed yet!</p></div>{% endif %}
-    <a href="/" style="display:block;text-align:center;color:var(--secondary);font-weight:bold;text-decoration:none;margin-top:20px;">← Back to Store</a>
 </div></body></html>"""
+
+# TELEGRAM BOT ALERT FUNCTION
+def send_telegram_alert(order):
+    try:
+        items = "\n".join([f"• {i['name']} (₹{i['price']})" for i in order['order_items']])
+        msg = (
+            f"🚨 *NEW ORDER RECEIVED!*\n\n"
+            f"👤 *Customer:* {order['name']}\n"
+            f"📞 *Phone:* {order['phone']}\n"
+            f"📍 *Address:* {order['address']}\n"
+            f"💳 *Payment:* {order['payment_mode']}\n"
+            f"💰 *Total Paid:* ₹{order['total']}\n\n"
+            f"📦 *Items Ordered:*\n{items}"
+        )
+        url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+        requests.post(url, json={"chat_id": TELEGRAM_CHAT_ID, "text": msg, "parse_mode": "Markdown"})
+    except Exception as e:
+        print("Telegram Error:", e)
 
 # ROUTES & LOGIC
 
@@ -198,15 +229,49 @@ ORDERS_HTML = CSS + """
 def home():
     cat = request.args.get('cat', 'All')
     cart = session.get('cart', [])
+    user = session.get('user')
     filtered = [p for p in PRODUCTS if p['category'] == cat] if cat != 'All' else PRODUCTS
-    return render_template_string(HOME_HTML, products=filtered, cart_count=len(cart), selected_cat=cat)
+    return render_template_string(HOME_HTML, products=filtered, cart_count=len(cart), selected_cat=cat, user=user)
+
+@app.route('/login')
+def login():
+    return render_template_string(LOGIN_HTML, mode='login', user=session.get('user'), cart_count=len(session.get('cart', [])))
+
+@app.route('/signup')
+def signup():
+    return render_template_string(LOGIN_HTML, mode='signup', user=session.get('user'), cart_count=len(session.get('cart', [])))
+
+@app.route('/auth', methods=['POST'])
+def auth():
+    mode = request.form.get('mode')
+    email = request.form.get('email')
+    password = request.form.get('password')
+    
+    if mode == 'signup':
+        USERS[email] = {
+            "name": request.form.get('name'),
+            "phone": request.form.get('phone'),
+            "email": email,
+            "password": password
+        }
+        session['user'] = USERS[email]
+        return redirect('/')
+    else:
+        if email in USERS and USERS[email]['password'] == password:
+            session['user'] = USERS[email]
+            return redirect('/')
+        return render_template_string(LOGIN_HTML, mode='login', msg='Invalid Email or Password', user=None, cart_count=len(session.get('cart', [])))
+
+@app.route('/logout')
+def logout():
+    session.pop('user', None)
+    return redirect('/')
 
 @app.route('/product/<int:product_id>')
 def product_detail(product_id):
     p = next((x for x in PRODUCTS if x['id'] == product_id), None)
     if not p: return redirect('/')
-    s = [x for x in PRODUCTS if x['id'] != product_id]
-    return render_template_string(PRODUCT_HTML, p=p, suggestions=s)
+    return render_template_string(PRODUCT_HTML, p=p, user=session.get('user'), cart_count=len(session.get('cart', [])))
 
 @app.route('/api/add/<int:product_id>')
 def api_add_to_cart(product_id):
@@ -223,23 +288,9 @@ def view_cart():
     cart = session.get('cart', [])
     sub = sum(x['price'] for x in cart)
     code = session.get('applied_coupon', '')
-    disc = 0
-    msg = session.pop('coupon_msg', '')
-    if code in COUPONS:
-        disc = round(sub * 0.2, 2) if code == 'OM20' else min(100, sub)
+    disc = round(sub * 0.2, 2) if code == 'OM20' else (min(100, sub) if code == 'SAVE100' else 0)
     tot = round(max(sub - disc, 0), 2)
-    return render_template_string(CART_HTML, items=cart, subtotal=sub, discount=disc, total=tot, applied_coupon=code, msg=msg)
-
-@app.route('/apply_coupon', methods=['POST'])
-def apply_coupon():
-    code = request.form.get('coupon_code', '').strip().upper()
-    if code in COUPONS:
-        session['applied_coupon'] = code
-        session['coupon_msg'] = f"Coupon '{code}' Applied!"
-    else:
-        session.pop('applied_coupon', None)
-        session['coupon_msg'] = "Invalid Coupon Code!"
-    return redirect(url_for('view_cart'))
+    return render_template_string(CART_HTML, items=cart, subtotal=sub, discount=disc, total=tot, user=session.get('user'), cart_count=len(cart))
 
 @app.route('/checkout', methods=['POST'])
 def checkout():
@@ -256,27 +307,22 @@ def checkout():
         "address": request.form.get('address'),
         "payment_mode": request.form.get('payment_mode'),
         "total": round(max(sub - disc, 0), 2),
-        "status": "Active",
+        "status": "Paid & Confirmed" if request.form.get('payment_mode') == 'Online' else "COD Confirmed",
         "order_items": list(cart)
     }
+    
+    send_telegram_alert(order)
+    
     orders = session.get('orders', [])
     orders.insert(0, order)
     session['orders'] = orders
     session.pop('cart', None)
-    session.pop('applied_coupon', None)
-    return redirect(url_for('view_orders'))
-
-@app.route('/order/action/<int:order_index>/<string:action>')
-def order_action(order_index, action):
-    orders = session.get('orders', [])
-    if 0 <= order_index < len(orders):
-        orders[order_index]['status'] = 'Cancelled' if action == 'cancel' else 'Return Requested'
-        session['orders'] = orders
     return redirect(url_for('view_orders'))
 
 @app.route('/orders')
 def view_orders():
-    return render_template_string(ORDERS_HTML, orders=session.get('orders', []))
+    return render_template_string(ORDERS_HTML, orders=session.get('orders', []), user=session.get('user'), cart_count=len(session.get('cart', [])))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000)
+

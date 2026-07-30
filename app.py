@@ -229,22 +229,45 @@ HOME_HTML = """
     <style>
         body { background: #ffffff; padding-bottom: 80px !important; }
 
-        /* Top Header */
+        /* Top Header & Search */
         .home-header { 
-            display: flex; 
-            align-items: center; 
-            justify-content: space-between; 
-            padding: 12px 16px; 
             background: #ffffff; 
             position: sticky; 
             top: 0; 
             z-index: 100;
             border-bottom: 1px solid #f0f0f0;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        .header-top-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
         .header-brand { display: flex; align-items: center; gap: 10px; }
         .logo-img { width: 32px; height: 32px; object-fit: contain; }
         .brand-title { font-size: 18px; font-weight: 800; color: #111; display: flex; align-items: center; gap: 6px; }
         .brand-title span { background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; }
+        
+        .header-email-btn { 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #ff4757; 
+            background: #fff0f2; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            text-decoration: none; 
+        }
+
+        .search-box { display: flex; width: 100%; }
+        .search-box input { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 8px 0 0 8px; font-size: 13px; outline: none; background: #f8f9fa; }
+        .search-box button { background: #ff4757; color: white; border: none; padding: 10px 14px; border-radius: 0 8px 8px 0; cursor: pointer; font-weight: bold; }
+
         
         .header-email-btn { 
             display: flex; 
@@ -378,16 +401,24 @@ HOME_HTML = """
     {% endwith %}
     </div>
 
-    <!-- Top Header -->
+       <!-- Top Header with Search Bar -->
     <div class="home-header">
-        <div class="header-brand">
-            <img src="{{ logo_url }}" class="logo-img" alt="Logo">
-            <div class="brand-title">Om's Store <span>Plus</span></div>
+        <div class="header-top-row">
+            <div class="header-brand">
+                <img src="{{ logo_url }}" class="logo-img" alt="Logo">
+                <div class="brand-title">Om's Store <span>Plus</span></div>
+            </div>
+            <a href="mailto:{{ email }}" class="header-email-btn">
+                ✉️ Customer Care
+            </a>
         </div>
-        <a href="mailto:{{ email }}" class="header-email-btn">
-            ✉️ Customer Care
-        </a>
+        <!-- SEARCH BAR RESTORED -->
+        <form action="/" method="GET" class="search-box">
+            <input type="text" name="q" placeholder="Search products, brands & categories..." value="{{ request.args.get('q', '') }}">
+            <button type="submit">🔍</button>
+        </form>
     </div>
+
 
     <div class="main-container">
         <!-- Hero Banner -->

@@ -106,7 +106,7 @@ PRODUCTS = [
 ]
 
 # ==========================================
-# COMMON CSS FOR SMOOTH ANIMATIONS & UI
+# COMMON CSS WITH FIXED NAV ALIGNMENT
 # ==========================================
 COMMON_STYLE = """
 <style>
@@ -125,19 +125,19 @@ COMMON_STYLE = """
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Fixed Bottom Nav Bar */
+    /* Fixed Perfectly Centered Bottom Nav Bar */
     .bottom-nav { 
         position: fixed; 
         bottom: 0; 
         left: 0; 
         right: 0; 
         width: 100%; 
+        height: 60px;
         background: #ffffff; 
         border-top: 1px solid #e2e8f0; 
         display: flex; 
         justify-content: space-around; 
         align-items: center; 
-        padding: 8px 0; 
         box-shadow: 0 -4px 15px rgba(0,0,0,0.06); 
         z-index: 1000; 
     }
@@ -146,14 +146,16 @@ COMMON_STYLE = """
         display: flex; 
         flex-direction: column; 
         align-items: center; 
+        justify-content: center;
         text-decoration: none; 
         color: #718096; 
         font-size: 11px; 
         font-weight: 600; 
+        height: 100%;
         transition: color 0.2s ease, transform 0.2s ease;
     }
     .nav-item.active { color: #ff4757; }
-    .nav-item span { font-size: 19px; margin-bottom: 2px; }
+    .nav-item span { font-size: 20px; line-height: 1; margin-bottom: 3px; display: block; }
     .nav-item:active { transform: scale(0.92); }
 
     /* Toast Notification */
@@ -275,7 +277,7 @@ HOME_HTML = """
         {% if user %}
             <a href="/logout" class="nav-item"><span>👤</span>Logout</a>
         {% else %}
-            <a href="/login" class="nav-item"><span>🔑</span>Account</a>
+            <a href="/login" class="nav-item"><span>👤</span>Account</a>
         {% endif %}
     </nav>
 </body>
@@ -717,9 +719,9 @@ ORDERS_HTML = """
 """
 
 # ==========================================
-# ROUTES & LOGIC
+# ROUTES & LOGIC (WITH STRICT SLASH DISABLE)
 # ==========================================
-@app.route('/')
+@app.route('/', strict_slashes=False)
 def home():
     cat = request.args.get('cat')
     search_query = request.args.get('q', '').strip().lower()
@@ -735,18 +737,18 @@ def home():
     user = session.get('user')
     return render_template_string(HOME_HTML, products=filtered_products, cart_count=cart_count, user=user)
 
-@app.route('/product/<int:product_id>')
+@app.route('/product/<int:product_id>', strict_slashes=False)
 def product_detail(product_id):
     product = next((p for p in PRODUCTS if p['id'] == product_id), None)
     if not product:
         return redirect(url_for('home'))
     return render_template_string(PRODUCT_DETAIL_HTML, product=product)
 
-@app.route('/login')
+@app.route('/login', strict_slashes=False)
 def login():
     return render_template_string(LOGIN_HTML, otp_sent=False)
 
-@app.route('/send_otp', methods=['POST'])
+@app.route('/send_otp', methods=['POST'], strict_slashes=False)
 def send_otp():
     identifier = request.form.get('identifier', '').strip()
     if not identifier:
@@ -759,7 +761,7 @@ def send_otp():
     flash(f"Your OTP is: {otp}")
     return render_template_string(LOGIN_HTML, otp_sent=True)
 
-@app.route('/verify_otp', methods=['POST'])
+@app.route('/verify_otp', methods=['POST'], strict_slashes=False)
 def verify_otp():
     user_otp = request.form.get('otp_input')
     if user_otp == session.get('generated_otp'):
@@ -770,13 +772,13 @@ def verify_otp():
         flash("Invalid OTP! Try again.")
         return render_template_string(LOGIN_HTML, otp_sent=True)
 
-@app.route('/logout')
+@app.route('/logout', strict_slashes=False)
 def logout():
     session.pop('user', None)
     flash("Logged out successfully!")
     return redirect(url_for('home'))
 
-@app.route('/add_to_cart/<int:product_id>')
+@app.route('/add_to_cart/<int:product_id>', strict_slashes=False)
 def add_to_cart(product_id):
     product = next((p for p in PRODUCTS if p['id'] == product_id), None)
     if product:
@@ -796,7 +798,7 @@ def add_to_cart(product_id):
         flash(f"{product['name']} added to cart!")
     return redirect(request.referrer or url_for('home'))
 
-@app.route('/update_qty/<string:product_id>/<string:action>')
+@app.route('/update_qty/<string:product_id>/<string:action>', strict_slashes=False)
 def update_qty(product_id, action):
     cart = session.get('cart', {})
     if product_id in cart:
@@ -809,7 +811,7 @@ def update_qty(product_id, action):
         session['cart'] = cart
     return redirect(url_for('cart'))
 
-@app.route('/remove_item/<string:product_id>')
+@app.route('/remove_item/<string:product_id>', strict_slashes=False)
 def remove_item(product_id):
     cart = session.get('cart', {})
     if product_id in cart:
@@ -818,7 +820,7 @@ def remove_item(product_id):
         flash("Item removed from cart.")
     return redirect(url_for('cart'))
 
-@app.route('/cart')
+@app.route('/cart', strict_slashes=False)
 def cart():
     cart = session.get('cart', {})
     total = sum(item['price'] * item['qty'] for item in cart.values())
@@ -827,7 +829,7 @@ def cart():
 # ==========================================
 # RAZORPAY PAYMENT ENDPOINTS
 # ==========================================
-@app.route('/create_razorpay_order', methods=['POST'])
+@app.route('/create_razorpay_order', methods=['POST'], strict_slashes=False)
 def create_razorpay_order():
     cart = session.get('cart', {})
     if not cart:
@@ -851,7 +853,7 @@ def create_razorpay_order():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/verify_payment', methods=['POST'])
+@app.route('/verify_payment', methods=['POST'], strict_slashes=False)
 def verify_payment():
     data = request.get_json()
     params_dict = {
@@ -905,7 +907,7 @@ def verify_payment():
     except Exception as e:
         return jsonify({'status': 'failure', 'error': str(e)}), 400
 
-@app.route('/checkout_cod', methods=['POST'])
+@app.route('/checkout_cod', methods=['POST'], strict_slashes=False)
 def checkout_cod():
     cart = session.get('cart', {})
     if not isinstance(cart, dict) or not cart:
@@ -950,7 +952,7 @@ def checkout_cod():
     send_telegram_notification("💵 *New COD Order Received!*", details)
     return jsonify({'status': 'success'})
 
-@app.route('/cancel_order/<int:order_id>')
+@app.route('/cancel_order/<int:order_id>', strict_slashes=False)
 def cancel_order(order_id):
     orders = session.get('orders', [])
     if 0 <= order_id < len(orders):
@@ -962,7 +964,7 @@ def cancel_order(order_id):
         flash("Order cancelled successfully.")
     return redirect(url_for('orders'))
 
-@app.route('/return_order/<int:order_id>')
+@app.route('/return_order/<int:order_id>', strict_slashes=False)
 def return_order(order_id):
     orders = session.get('orders', [])
     if 0 <= order_id < len(orders):
@@ -974,7 +976,14 @@ def return_order(order_id):
         flash("Return request submitted.")
     return redirect(url_for('orders'))
 
-@app.route('/admin')
+@app.route('/orders', strict_slashes=False)
+def orders():
+    return render_template_string(ORDERS_HTML, orders=session.get('orders', []), products=PRODUCTS)
+
+# ==========================================
+# ADMIN PORTAL
+# ==========================================
+@app.route('/admin', strict_slashes=False)
 def admin_dashboard():
     if not session.get('is_admin'):
         return render_template_string("""
@@ -1016,7 +1025,7 @@ def admin_dashboard():
             <div class="box">
                 <h3 style="margin-top:0;">➕ Add New Product to Store</h3>
                 <form action="/admin/add_product" method="POST">
-                    <input type="text" name="name" class="form-input" placeholder="Product Title (e.g. Wireless Earbuds)" required>
+                    <input type="text" name="name" class="form-input" placeholder="Product Title" required>
                     <div style="display:flex; gap:8px;">
                         <input type="number" step="0.01" name="price" class="form-input" placeholder="Selling Price (₹)" required>
                         <input type="number" step="0.01" name="mrp" class="form-input" placeholder="MRP Price (₹)">
@@ -1027,16 +1036,16 @@ def admin_dashboard():
                             <option value="Wearables">Wearables</option>
                             <option value="Accessories">Accessories</option>
                         </select>
-                        <input type="text" name="tag" class="form-input" placeholder="Badge Tag (e.g. Bestseller, 20% OFF)">
+                        <input type="text" name="tag" class="form-input" placeholder="Badge Tag (e.g. Bestseller)">
                     </div>
-                    <input type="url" name="image" class="form-input" placeholder="Image URL (Unsplash or Direct Image Link)" required>
-                    <input type="text" name="delivery" class="form-input" placeholder="Delivery Info (e.g. FREE Delivery Tomorrow)">
+                    <input type="url" name="image" class="form-input" placeholder="Image URL" required>
+                    <input type="text" name="delivery" class="form-input" placeholder="Delivery Info">
                     <textarea name="description" class="form-input" placeholder="Product Description..." style="height:60px; font-family:inherit;"></textarea>
                     <button type="submit" class="btn-add">PUBLISH PRODUCT TO STORE</button>
                 </form>
             </div>
 
-            <!-- MANAGE EXISTING PRODUCTS -->
+            <!-- MANAGE PRODUCTS -->
             <div class="box">
                 <h3 style="margin-top:0;">📦 Existing Products</h3>
                 {% for p in products %}
@@ -1090,8 +1099,53 @@ def admin_dashboard():
         </html>
     """, products=PRODUCTS)
 
+@app.route('/admin/add_product', methods=['POST'], strict_slashes=False)
+def admin_add_product():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin_login', methods=['POST'])
+    name = request.form.get('name', '').strip()
+    category = request.form.get('category', 'Audio')
+    price = float(request.form.get('price', 0))
+    mrp = float(request.form.get('mrp', price * 1.2))
+    discount = request.form.get('discount', '10% OFF')
+    tag = request.form.get('tag', 'New Arrival')
+    image = request.form.get('image', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80')
+    delivery = request.form.get('delivery', 'FREE Delivery within 2 Days')
+    description = request.form.get('description', 'High-quality product from Om\'s Store.')
+
+    new_id = max([p['id'] for p in PRODUCTS], default=0) + 1
+
+    new_product = {
+        "id": new_id,
+        "name": name,
+        "category": category,
+        "price": price,
+        "mrp": mrp,
+        "discount": discount,
+        "rating": 5.0,
+        "reviews": 1,
+        "image": image,
+        "tag": tag,
+        "delivery": delivery,
+        "description": description
+    }
+
+    PRODUCTS.append(new_product)
+    flash(f"🎉 Product '{name}' added successfully!")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_product/<int:product_id>', strict_slashes=False)
+def admin_delete_product(product_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_dashboard'))
+
+    global PRODUCTS
+    PRODUCTS = [p for p in PRODUCTS if p['id'] != product_id]
+    flash("🗑️ Product removed from store.")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin_login', methods=['POST'], strict_slashes=False)
 def admin_login():
     if request.form.get('password') == ADMIN_PASSWORD:
         session['is_admin'] = True
@@ -1100,12 +1154,12 @@ def admin_login():
         flash("Invalid Admin Password!")
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin_logout')
+@app.route('/admin_logout', strict_slashes=False)
 def admin_logout():
     session.pop('is_admin', None)
     return redirect(url_for('home'))
 
-@app.route('/admin/update_status/<int:order_id>/<string:new_status>')
+@app.route('/admin/update_status/<int:order_id>/<string:new_status>', strict_slashes=False)
 def admin_update_status(order_id, new_status):
     if not session.get('is_admin'):
         return redirect(url_for('admin_dashboard'))
@@ -1128,7 +1182,7 @@ def admin_update_status(order_id, new_status):
         
     return redirect(url_for('admin_dashboard'))
 
-@app.route('/admin/cancel_order/<int:order_id>')
+@app.route('/admin/cancel_order/<int:order_id>', strict_slashes=False)
 def admin_cancel_order(order_id):
     if not session.get('is_admin'):
         return redirect(url_for('admin_dashboard'))
@@ -1147,56 +1201,6 @@ def admin_cancel_order(order_id):
         )
         send_telegram_notification("⚠️ *Admin Order Cancellation*", details)
         flash("Order cancelled by Admin.")
-    return redirect(url_for('admin_dashboard'))
-    
-    # ==========================================
-# ADMIN PRODUCT MANAGEMENT
-# ==========================================
-@app.route('/admin/add_product', methods=['POST'])
-def admin_add_product():
-    if not session.get('is_admin'):
-        return redirect(url_for('admin_dashboard'))
-
-    name = request.form.get('name', '').strip()
-    category = request.form.get('category', 'Audio')
-    price = float(request.form.get('price', 0))
-    mrp = float(request.form.get('mrp', price * 1.2))
-    discount = request.form.get('discount', '10% OFF')
-    tag = request.form.get('tag', 'New Arrival')
-    image = request.form.get('image', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80')
-    delivery = request.form.get('delivery', 'FREE Delivery within 2 Days')
-    description = request.form.get('description', 'High-quality product from Om\'s Store.')
-
-    # Generate a unique product ID
-    new_id = max([p['id'] for p in PRODUCTS], default=0) + 1
-
-    new_product = {
-        "id": new_id,
-        "name": name,
-        "category": category,
-        "price": price,
-        "mrp": mrp,
-        "discount": discount,
-        "rating": 5.0,
-        "reviews": 1,
-        "image": image,
-        "tag": tag,
-        "delivery": delivery,
-        "description": description
-    }
-
-    PRODUCTS.append(new_product)
-    flash(f"🎉 Product '{name}' added successfully!")
-    return redirect(url_for('admin_dashboard'))
-
-@app.route('/admin/delete_product/<int:product_id>')
-def admin_delete_product(product_id):
-    if not session.get('is_admin'):
-        return redirect(url_for('admin_dashboard'))
-
-    global PRODUCTS
-    PRODUCTS = [p for p in PRODUCTS if p['id'] != product_id]
-    flash("🗑️ Product removed from store.")
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':

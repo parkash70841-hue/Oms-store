@@ -185,6 +185,13 @@ COMMON_STYLE = """
         30% { transform: scale(1.3) rotate(-12deg); }
         60% { transform: scale(1.2) rotate(12deg); }
     }
+    @keyframes slidePopAndHide {
+        0% { transform: scale(0.7) translateY(-50px); opacity: 0; }
+        15% { transform: scale(1.05) translateY(5px); opacity: 1; }
+        25% { transform: scale(1) translateY(0); opacity: 1; }
+        85% { transform: scale(1) translateY(0); opacity: 1; }
+        100% { transform: scale(0.9) translateY(-40px); opacity: 0; }
+    }
 
     .toast { 
         background: #111111;
@@ -194,12 +201,13 @@ COMMON_STYLE = """
         font-size: 13px; 
         font-weight: 700; 
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); 
-        animation: slidePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        animation: slidePopAndHide 3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         display: flex;
         align-items: center;
         gap: 12px;
         border: 2px solid #27ae60;
     }
+
 
     .toast-icon {
         background: #27ae60;

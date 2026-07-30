@@ -482,10 +482,16 @@ def home():
     if search_query:
         filtered_products = [p for p in filtered_products if search_query in p['name'].lower() or search_query in p['category'].lower()]
     
+    # Safe Cart Check: Reset old list session to dictionary if needed
     cart = session.get('cart', {})
+    if not isinstance(cart, dict):
+        cart = {}
+        session['cart'] = cart
+
     cart_count = sum(item['qty'] for item in cart.values())
     user = session.get('user')
     return render_template_string(HOME_HTML, products=filtered_products, cart_count=cart_count, user=user)
+
 
 @app.route('/login')
 def login():
@@ -585,14 +591,13 @@ def remove_item(product_id):
 @app.route('/cart')
 def cart():
     cart = session.get('cart', {})
+    if not isinstance(cart, dict):
+        cart = {}
+        session['cart'] = cart
+        
     total = sum(item['price'] * item['qty'] for item in cart.values())
     return render_template_string(CART_HTML, cart=cart, total=total)
 
-@app.route('/checkout', methods=['POST'])
-def checkout():
-    cart = session.get('cart', {})
-    if not cart:
-        return redirect(url_for('home'))
 
     payment_method = request.form.get('payment_method', 'UPI / Online')
     upi_id = request.form.get('upi_id', '')

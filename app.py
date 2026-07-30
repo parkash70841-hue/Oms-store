@@ -17,12 +17,13 @@ TELEGRAM_CHAT_ID = "7867296083"
 # Admin Password
 ADMIN_PASSWORD = "admin_password_2026"
 
-# Live Razorpay Credentials (UPDATED)
+# Live Razorpay Credentials
 RAZORPAY_KEY_ID = "rzp_live_TJitd3iSUTjRvj"
 RAZORPAY_KEY_SECRET = "cy9j7FsRBGeneGYybhPP28as"
 
-# Custom Logo URL
+# Store Settings
 STORE_LOGO_URL = "https://cdn-icons-png.flaticon.com/512/3081/3081559.png"
+CUSTOMER_CARE_EMAIL = "opr70841@gmail.com"
 
 razor_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
@@ -109,7 +110,7 @@ PRODUCTS = [
 ]
 
 # ==========================================
-# COMMON CSS & ANIMATED CART TOAST
+# COMMON CSS & ANIMATIONS
 # ==========================================
 COMMON_STYLE = """
 <style>
@@ -171,7 +172,7 @@ COMMON_STYLE = """
         margin-bottom: 2px;
     }
 
-    /* COOL ANIMATED ADD TO CART POPUP */
+    /* Animated Add to Cart Popup */
     .toast-container { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 999999; width: 90%; max-width: 380px; }
     
     @keyframes slidePop {
@@ -185,13 +186,6 @@ COMMON_STYLE = """
         30% { transform: scale(1.3) rotate(-12deg); }
         60% { transform: scale(1.2) rotate(12deg); }
     }
-    @keyframes slidePopAndHide {
-        0% { transform: scale(0.7) translateY(-50px); opacity: 0; }
-        15% { transform: scale(1.05) translateY(5px); opacity: 1; }
-        25% { transform: scale(1) translateY(0); opacity: 1; }
-        85% { transform: scale(1) translateY(0); opacity: 1; }
-        100% { transform: scale(0.9) translateY(-40px); opacity: 0; }
-    }
 
     .toast { 
         background: #111111;
@@ -201,16 +195,15 @@ COMMON_STYLE = """
         font-size: 13px; 
         font-weight: 700; 
         box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); 
-        animation: slidePopAndHide 3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        animation: slidePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         display: flex;
         align-items: center;
         gap: 12px;
-        border: 2px solid #27ae60;
+        border: 2px solid #ff4757;
     }
 
-
     .toast-icon {
-        background: #27ae60;
+        background: #ff4757;
         width: 32px;
         height: 32px;
         border-radius: 50%;
@@ -234,46 +227,141 @@ HOME_HTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     """ + COMMON_STYLE + """
     <style>
-        header { background: #111; color: #fff; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
-        .top-row { display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
-        .logo img { width: 26px; height: 26px; object-fit: contain; }
-        .logo span { background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; }
-        .cart-icon { position: relative; color: white; text-decoration: none; font-size: 20px; }
-        .cart-badge { position: absolute; top: -6px; right: -10px; background: #ff4757; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; }
+        body { background: #ffffff; padding-bottom: 80px !important; }
 
-        .search-box { display: flex; width: 100%; }
-        .search-box input { width: 100%; padding: 10px 14px; border: none; border-radius: 8px 0 0 8px; font-size: 13px; outline: none; }
-        .search-box button { background: #ff4757; color: white; border: none; padding: 10px 14px; border-radius: 0 8px 8px 0; cursor: pointer; font-weight: bold; }
+        /* Top Header */
+        .home-header { 
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between; 
+            padding: 12px 16px; 
+            background: #ffffff; 
+            position: sticky; 
+            top: 0; 
+            z-index: 100;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .header-brand { display: flex; align-items: center; gap: 10px; }
+        .logo-img { width: 32px; height: 32px; object-fit: contain; }
+        .brand-title { font-size: 18px; font-weight: 800; color: #111; display: flex; align-items: center; gap: 6px; }
+        .brand-title span { background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; }
+        
+        .header-email-btn { 
+            display: flex; 
+            align-items: center; 
+            gap: 5px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: #ff4757; 
+            background: #fff0f2; 
+            padding: 6px 12px; 
+            border-radius: 20px; 
+            text-decoration: none; 
+        }
 
-        .cat-bar { display: flex; gap: 8px; padding: 10px 14px; overflow-x: auto; background: #fff; border-bottom: 1px solid #e1e2e6; }
-        .cat-btn { background: #f1f2f6; color: #222; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 12px; font-weight: 600; white-space: nowrap; transition: 0.2s; }
-        .cat-btn:hover { background: #ff4757; color: white; }
+        .main-container { padding: 16px; max-width: 600px; margin: auto; }
 
-        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; max-width: 800px; margin: auto; }
-        .card { 
-            background: #fff; 
-            border-radius: 10px; 
-            padding: 10px; 
+        /* Hero Banner */
+        .hero-banner { 
             position: relative; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.04); 
+            border-radius: 20px; 
+            overflow: hidden; 
+            background: linear-gradient(rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0.65)), url('https://images.unsplash.com/photo-1483985988355-763728e1935b?w=800&q=80'); 
+            background-size: cover; 
+            background-position: center; 
+            padding: 24px 20px; 
+            color: white; 
+            margin-bottom: 16px; 
+        }
+        .hero-badge { 
+            display: inline-block; 
+            background: #ff4757; 
+            color: #ffffff; 
+            font-size: 11px; 
+            font-weight: 700; 
+            padding: 5px 12px; 
+            border-radius: 20px; 
+            margin-bottom: 12px; 
+        }
+        .hero-title { font-size: 24px; font-weight: 800; line-height: 1.2; margin-bottom: 6px; }
+        .hero-sub { font-size: 12px; opacity: 0.9; margin-bottom: 16px; line-height: 1.4; }
+        .hero-btn { 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            background: #ffffff; 
+            color: #111; 
+            font-size: 13px; 
+            font-weight: 700; 
+            padding: 10px 18px; 
+            border-radius: 25px; 
+            text-decoration: none; 
+        }
+
+        /* Value Badges Row */
+        .value-grid { display: flex; gap: 8px; overflow-x: auto; margin-bottom: 24px; padding-bottom: 4px; }
+        .value-pill { 
+            display: flex; 
+            align-items: center; 
+            gap: 6px; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 25px; 
+            padding: 8px 14px; 
+            font-size: 11px; 
+            font-weight: 600; 
+            color: #333; 
+            white-space: nowrap; 
+            background: #ffffff;
+        }
+
+        /* Section Headings */
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .section-title { font-size: 16px; font-weight: 700; color: #111; }
+        .see-all { font-size: 12px; font-weight: 600; color: #ff4757; text-decoration: none; }
+
+        /* Categories Circles */
+        .cat-scroll { display: flex; gap: 16px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 24px; }
+        .cat-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; min-width: 65px; }
+        .cat-circle { 
+            width: 58px; 
+            height: 58px; 
+            border-radius: 50%; 
+            background: #f8f9fa; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 22px; 
+            margin-bottom: 6px; 
+            border: 1px solid #f0f0f0;
+            transition: transform 0.2s;
+        }
+        .cat-item:active .cat-circle { transform: scale(0.92); }
+        .cat-label { font-size: 11px; font-weight: 600; color: #444; }
+
+        /* Product Grid */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .card { 
+            background: #ffffff; 
+            border: 1px solid #e2e8f0; 
+            border-radius: 14px; 
+            overflow: hidden; 
             display: flex; 
             flex-direction: column; 
-            justify-content: space-between; 
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            position: relative; 
         }
-        .card:hover { transform: translateY(-3px); box-shadow: 0 6px 15px rgba(0,0,0,0.08); }
-        .badge { position: absolute; top: 10px; left: 10px; background: gold; color: #000; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 1; }
-        .card img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; transition: transform 0.3s ease; }
-        .card:hover img { transform: scale(1.02); }
-        .title { font-size: 13px; font-weight: 600; margin: 6px 0 3px; height: 32px; overflow: hidden; text-decoration: none; color: #222; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
-        .rating { color: #ffa500; font-size: 11px; margin-bottom: 3px; }
-        .price { font-size: 14px; font-weight: bold; color: #d63031; margin: 2px 0; }
-        .mrp { font-size: 10px; color: #888; text-decoration: line-through; }
-        .disc { font-size: 11px; color: green; font-weight: bold; }
-        .del-info { font-size: 10px; color: #27ae60; font-weight: 600; margin: 4px 0 8px; }
-        .btn { display: block; width: 100%; background: #111111; color: white; text-align: center; padding: 10px 0; border: none; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: auto; transition: background 0.2s; }
-        .btn:hover { background: #333333; }
+        .card-badges { position: absolute; top: 10px; left: 10px; right: 10px; display: flex; justify-content: space-between; z-index: 2; pointer-events: none; }
+        .badge-disc { background: #ff4757; color: white; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 12px; }
+        .badge-new { background: #111; color: white; font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 12px; }
+
+        .img-box { background: #f9f9fb; height: 140px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .img-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        .card-details { padding: 12px; display: flex; flex-direction: column; flex: 1; }
+        .card-brand { font-size: 10px; font-weight: 700; color: #888; text-transform: uppercase; margin-bottom: 2px; }
+        .card-title { font-size: 13px; font-weight: 700; color: #111; text-decoration: none; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; height: 32px; }
+        .card-rating { font-size: 11px; font-weight: 600; color: #333; margin-bottom: 6px; }
+        .card-price-row { font-size: 14px; font-weight: 800; color: #d63031; margin-top: auto; }
+        .card-mrp { font-size: 11px; color: #888; text-decoration: line-through; font-weight: normal; margin-left: 4px; }
     </style>
 </head>
 <body>
@@ -290,42 +378,92 @@ HOME_HTML = """
     {% endwith %}
     </div>
 
-    <header>
-        <div class="top-row">
-            <div class="logo">
-                <img src="{{ logo_url }}" alt="Logo">
-                Om's Store <span>Plus</span>
+    <!-- Top Header -->
+    <div class="home-header">
+        <div class="header-brand">
+            <img src="{{ logo_url }}" class="logo-img" alt="Logo">
+            <div class="brand-title">Om's Store <span>Plus</span></div>
+        </div>
+        <a href="mailto:{{ email }}" class="header-email-btn">
+            ✉️ Customer Care
+        </a>
+    </div>
+
+    <div class="main-container">
+        <!-- Hero Banner -->
+        <div class="hero-banner">
+            <span class="hero-badge">⚡ Mega Sale · Up to 70% off</span>
+            <div class="hero-title">Everything You Need,<br>One Cart.</div>
+            <div class="hero-sub">Fashion, Electronics, Home & more — delivered fast.</div>
+            <a href="#featured" class="hero-btn">Shop now →</a>
+        </div>
+
+        <!-- Trust Badges -->
+        <div class="value-grid">
+            <div class="value-pill">🚚 Free Shipping</div>
+            <div class="value-pill">🛡️ Secure Pay</div>
+            <div class="value-pill">🏷️ Best Prices</div>
+        </div>
+
+        <!-- Categories -->
+        <div class="section-header">
+            <div class="section-title">Shop by Category</div>
+            <a href="/" class="see-all">See all →</a>
+        </div>
+
+        <div class="cat-scroll">
+            <a href="/?cat=Audio" class="cat-item">
+                <div class="cat-circle">🎧</div>
+                <span class="cat-label">Audio</span>
+            </a>
+            <a href="/?cat=Wearables" class="cat-item">
+                <div class="cat-circle">⌚</div>
+                <span class="cat-label">Wearables</span>
+            </a>
+            <a href="/?cat=Accessories" class="cat-item">
+                <div class="cat-circle">🖱️</div>
+                <span class="cat-label">Accessories</span>
+            </a>
+            <a href="/" class="cat-item">
+                <div class="cat-circle">📱</div>
+                <span class="cat-label">Mobiles</span>
+            </a>
+            <a href="/" class="cat-item">
+                <div class="cat-circle">💻</div>
+                <span class="cat-label">Laptops</span>
+            </a>
+        </div>
+
+        <!-- Featured Products Grid -->
+        <div class="section-header" id="featured">
+            <div class="section-title">Featured</div>
+            <a href="/" class="see-all">See all →</a>
+        </div>
+
+        <div class="grid">
+            {% for p in products %}
+            <div class="card">
+                <div class="card-badges">
+                    <span class="badge-disc">{{ p.discount }}</span>
+                    <span class="badge-new">NEW</span>
+                </div>
+                <a href="/product/{{ p.id }}" class="img-box">
+                    <img src="{{ p.image }}">
+                </a>
+                <div class="card-details">
+                    <div class="card-brand">OM'S STORE</div>
+                    <a href="/product/{{ p.id }}" class="card-title">{{ p.name }}</a>
+                    <div class="card-rating">★ {{ p.rating }} <span style="color:#888;">({{ p.reviews }})</span></div>
+                    <div class="card-price-row">
+                        ₹{{ p.price }} <span class="card-mrp">₹{{ p.mrp }}</span>
+                    </div>
+                </div>
             </div>
-            <a href="/cart" class="cart-icon">🛒 <span class="cart-badge">{{ cart_count }}</span></a>
+            {% endfor %}
         </div>
-        <form action="/" method="GET" class="search-box">
-            <input type="text" name="q" placeholder="Search products..." value="{{ request.args.get('q', '') }}">
-            <button type="submit">🔍</button>
-        </form>
-    </header>
-
-    <div class="cat-bar">
-        <a href="/" class="cat-btn">All Categories</a>
-        <a href="/?cat=Audio" class="cat-btn">Audio</a>
-        <a href="/?cat=Wearables" class="cat-btn">Wearables</a>
-        <a href="/?cat=Accessories" class="cat-btn">Accessories</a>
     </div>
 
-    <div class="grid">
-        {% for p in products %}
-        <div class="card">
-            <span class="badge">{{ p.tag }}</span>
-            <a href="/product/{{ p.id }}"><img src="{{ p.image }}"></a>
-            <a href="/product/{{ p.id }}" class="title">{{ p.name }}</a>
-            <div class="rating">★ {{ p.rating }} <span style="color:#888;">({{ p.reviews }})</span></div>
-            <div class="price">₹{{ p.price }} <span class="mrp">₹{{ p.mrp }}</span></div>
-            <div class="disc">{{ p.discount }}</div>
-            <div class="del-info">🚚 {{ p.delivery }}</div>
-            <a href="/add_to_cart/{{ p.id }}" class="btn">ADD TO CART</a>
-        </div>
-        {% endfor %}
-    </div>
-
+    <!-- Bottom Nav Bar -->
     <nav class="bottom-nav">
         <a href="/" class="nav-item active"><span>🏠</span>Home</a>
         <a href="/cart" class="nav-item"><span>🛒</span>Cart</a>
@@ -336,6 +474,18 @@ HOME_HTML = """
             <a href="/login" class="nav-item"><span>👤</span>Account</a>
         {% endif %}
     </nav>
+
+    <script>
+        setTimeout(() => {
+            const toast = document.querySelector('.toast-container');
+            if (toast) {
+                toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, -20px)';
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, 2500);
+    </script>
 </body>
 </html>
 """
@@ -348,25 +498,68 @@ PRODUCT_DETAIL_HTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     """ + COMMON_STYLE + """
     <style>
-        body { padding:15px; }
-        .container { max-width: 600px; margin: auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
-        .back { color:#333; text-decoration:none; display:inline-block; margin-bottom:15px; font-weight:bold; }
-        img { width: 100%; height: 260px; object-fit: cover; border-radius: 8px; }
-        .title { font-size: 20px; font-weight: bold; margin: 15px 0 5px; }
-        .price-section { font-size: 22px; font-weight: bold; color: #d63031; margin: 10px 0; }
-        .mrp { font-size: 14px; color: #888; text-decoration: line-through; margin-left: 10px; }
-        .desc { font-size: 14px; color: #555; line-height: 1.5; margin: 15px 0; }
-        .del { background: #e8f8f0; color: #27ae60; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; font-size: 13px; }
-        .btn { background: #111111; color: white; padding: 14px; text-align: center; display: block; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 20px; transition: background 0.2s; }
-        .btn:hover { background: #333333; }
+        body { background: #ffffff; padding-bottom: 140px !important; }
+        
+        /* Top Navigation Bar */
+        .p-header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; background: #fff; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
+        .p-header-title { font-size: 16px; font-weight: 600; color: #222; }
+        .p-header-icons { display: flex; align-items: center; gap: 12px; }
+        .email-icon-btn { color: #ff4757; font-size: 12px; font-weight: bold; text-decoration: none; background: #fff0f2; padding: 4px 10px; border-radius: 15px; }
 
-        .sugg-title { font-size:16px; font-weight:bold; margin:30px 0 12px 0; color:#222; border-top:1px solid #eee; padding-top:20px; }
-        .sugg-grid { display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; }
-        .sugg-card { background:#f8f9fa; border:1px solid #e2e8f0; border-radius:8px; padding:10px; min-width:140px; text-align:center; flex-shrink:0; }
-        .sugg-card img { width:100%; height:80px; object-fit:cover; border-radius:6px; }
-        .sugg-name { font-size:11px; font-weight:bold; height:28px; overflow:hidden; margin:5px 0; color:#222; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; text-decoration:none; }
-        .sugg-price { color:#d63031; font-weight:bold; font-size:12px; }
-        .sugg-btn { background:#111111; color:white; border:none; padding:6px 10px; border-radius:4px; font-size:10px; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px; }
+        /* Image Box & Badge */
+        .img-container { position: relative; background: #f9f9fb; width: 100%; text-align: center; }
+        .img-container img { width: 100%; max-height: 320px; object-fit: contain; padding: 20px 0; }
+        .discount-badge { position: absolute; top: 15px; left: 15px; background: #ff4757; color: white; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px; }
+
+        /* Product Details Content */
+        .p-content { padding: 16px; max-width: 600px; margin: auto; }
+        .brand-name { font-size: 11px; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+        .p-title { font-size: 20px; font-weight: 700; color: #111; margin: 4px 0 8px; }
+        
+        .rating-sku { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .rate-box { background: #f5f5f7; padding: 4px 8px; border-radius: 6px; font-size: 12px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+        .sku-text { font-size: 11px; color: #888; }
+
+        .price-row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+        .main-price { font-size: 24px; font-weight: 800; color: #d63031; }
+        .mrp-price { font-size: 14px; color: #888; text-decoration: line-through; }
+        .save-tag { font-size: 13px; color: #27ae60; font-weight: 700; }
+        .tax-subtext { font-size: 11px; color: #777; margin-bottom: 16px; }
+
+        /* Stock & Quantity Control */
+        .stock-qty-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .stock-pill { background: #e6f4ea; color: #137333; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 20px; }
+        .qty-picker { display: flex; align-items: center; border: 1px solid #e2e8f0; border-radius: 20px; padding: 4px 12px; gap: 16px; }
+        .qty-picker button { border: none; background: none; font-size: 16px; font-weight: bold; cursor: pointer; color: #333; }
+
+        /* Sections */
+        .sec-title { font-size: 14px; font-weight: 700; margin: 20px 0 8px; color: #222; }
+        .sec-text { font-size: 13px; color: #555; line-height: 1.5; }
+
+        /* Specs Table */
+        .specs-card { border: 1px solid #eee; border-radius: 10px; overflow: hidden; margin-bottom: 20px; }
+        .spec-row { display: flex; justify-content: space-between; padding: 10px 14px; font-size: 12px; border-bottom: 1px solid #eee; }
+        .spec-row:last-child { border-bottom: none; }
+        .spec-key { color: #666; }
+        .spec-val { font-weight: 600; color: #111; }
+
+        /* Trust Badges */
+        .trust-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin: 20px 0; }
+        .trust-card { border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 6px; text-align: center; font-size: 11px; font-weight: 600; color: #333; }
+        .trust-card span { display: block; font-size: 16px; margin-bottom: 4px; }
+
+        /* Sticky Bottom Action Bar */
+        .p-action-bar { position: fixed; bottom: 60px; left: 0; right: 0; background: white; border-top: 1px solid #eee; padding: 10px 16px; display: flex; align-items: center; gap: 10px; z-index: 999; }
+        .wishlist-btn { border: 1px solid #ccc; background: white; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; font-size: 18px; cursor: pointer; }
+        .btn-outline-cart { flex: 1; border: 1px solid #111; background: white; color: #111; font-weight: 700; padding: 12px; border-radius: 25px; text-align: center; text-decoration: none; font-size: 13px; }
+        .btn-solid-buy { flex: 1; background: #111111; color: white; font-weight: 700; padding: 12px; border-radius: 25px; text-align: center; text-decoration: none; font-size: 13px; }
+
+        /* Similar Products Carousel */
+        .sugg-grid { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 10px; }
+        .sugg-card { border: 1px solid #eee; border-radius: 10px; padding: 8px; min-width: 140px; flex-shrink: 0; position: relative; }
+        .sugg-card img { width: 100%; height: 100px; object-fit: contain; }
+        .sugg-title-text { font-size: 11px; font-weight: 600; margin: 6px 0; color: #222; text-decoration: none; display: block; height: 28px; overflow: hidden; }
+        .sugg-price-text { font-size: 12px; font-weight: 700; color: #d63031; }
     </style>
 </head>
 <body>
@@ -383,30 +576,92 @@ PRODUCT_DETAIL_HTML = """
     {% endwith %}
     </div>
 
-    <div class="container">
-        <a href="/" class="back">← Back to Store</a>
-        <img src="{{ product.image }}">
-        <div class="title">{{ product.name }}</div>
-        <div class="rating">★ {{ product.rating }} ({{ product.reviews }} reviews)</div>
-        <div class="price-section">₹{{ product.price }} <span class="mrp">₹{{ product.mrp }}</span> <span style="font-size:14px; color:green;">({{ product.discount }})</span></div>
-        <div class="del">🚚 {{ product.delivery }}</div>
-        <h3>Product Description</h3>
-        <div class="desc">{{ product.description }}</div>
-        <a href="/add_to_cart/{{ product.id }}" class="btn">ADD TO CART</a>
+    <!-- Header -->
+    <div class="p-header">
+        <a href="/" style="text-decoration:none; color:#111; font-weight:bold;">←</a>
+        <div class="p-header-title">Product</div>
+        <div class="p-header-icons">
+            <a href="mailto:{{ email }}" class="email-icon-btn">✉️ Help</a>
+        </div>
+    </div>
 
-        <div class="sugg-title">🔥 You Might Also Like</div>
+    <!-- Image Container -->
+    <div class="img-container">
+        <span class="discount-badge">{{ product.discount }}</span>
+        <img src="{{ product.image }}">
+    </div>
+
+    <!-- Content -->
+    <div class="p-content">
+        <div class="brand-name">OM'S STORE EXCLUSIVE</div>
+        <div class="p-title">{{ product.name }}</div>
+
+        <div class="rating-sku">
+            <div class="rate-box">★ {{ product.rating }} <span style="color:#777; font-weight:normal;">({{ product.reviews }} reviews)</span></div>
+            <div class="sku-text">SKU: OM-{{ product.id }}026</div>
+        </div>
+
+        <div class="price-row">
+            <span class="main-price">₹{{ product.price }}</span>
+            <span class="mrp-price">₹{{ product.mrp }}</span>
+            <span class="save-tag">Save {{ product.discount }}</span>
+        </div>
+        <div class="tax-subtext">Inclusive of all taxes • Free shipping on orders</div>
+
+        <div class="stock-qty-row">
+            <span class="stock-pill">In stock</span>
+            <div class="qty-picker">
+                <button onclick="decrementQty()">-</button>
+                <span id="qty-val" style="font-weight:bold; font-size:13px;">1</span>
+                <button onclick="incrementQty()">+</button>
+            </div>
+        </div>
+
+        <div class="sec-title">Description</div>
+        <div class="sec-text">{{ product.description }}</div>
+
+        <div class="sec-title">Specifications</div>
+        <div class="specs-card">
+            <div class="spec-row">
+                <span class="spec-key">Category</span>
+                <span class="spec-val">{{ product.category }}</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Delivery</span>
+                <span class="spec-val">{{ product.delivery }}</span>
+            </div>
+            <div class="spec-row">
+                <span class="spec-key">Support</span>
+                <span class="spec-val">{{ email }}</span>
+            </div>
+        </div>
+
+        <div class="trust-grid">
+            <div class="trust-card"><span>🚚</span>Fast Ship</div>
+            <div class="trust-card"><span>🛡️</span>Authentic</div>
+            <div class="trust-card"><span>🔄</span>7-day Return</div>
+        </div>
+
+        <div class="sec-title">Similar products</div>
         <div class="sugg-grid">
             {% for p in products %}
             {% if p.id != product.id %}
             <div class="sugg-card">
                 <a href="/product/{{ p.id }}"><img src="{{ p.image }}"></a>
-                <a href="/product/{{ p.id }}" class="sugg-name">{{ p.name }}</a>
-                <div class="sugg-price">₹{{ p.price }}</div>
-                <a href="/add_to_cart/{{ p.id }}" class="sugg-btn">+ ADD</a>
+                <a href="/product/{{ p.id }}" class="sugg-title-text">{{ p.name }}</a>
+                <div class="sugg-price-text">₹{{ p.price }}</div>
             </div>
             {% endif %}
             {% endfor %}
         </div>
+    </div>
+
+    <!-- Sticky Bottom Action Bar -->
+    <div class="p-action-bar">
+        <button class="wishlist-btn">♡</button>
+        <a href="/add_to_cart/{{ product.id }}" class="btn-outline-cart">Add to Cart</a>
+        <!-- DIRECT BUY NOW ACTION ROUTE -->
+        <a href="/buy_now/{{ product.id }}" class="btn-solid-buy">Buy Now</a>
     </div>
 
     <nav class="bottom-nav">
@@ -415,6 +670,30 @@ PRODUCT_DETAIL_HTML = """
         <a href="/orders" class="nav-item"><span>📦</span>Orders</a>
         <a href="/login" class="nav-item"><span>👤</span>Account</a>
     </nav>
+
+    <script>
+        let currentQty = 1;
+        function incrementQty() {
+            currentQty++;
+            document.getElementById('qty-val').innerText = currentQty;
+        }
+        function decrementQty() {
+            if (currentQty > 1) {
+                currentQty--;
+                document.getElementById('qty-val').innerText = currentQty;
+            }
+        }
+        
+        setTimeout(() => {
+            const toast = document.querySelector('.toast-container');
+            if (toast) {
+                toast.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                toast.style.opacity = '0';
+                toast.style.transform = 'translate(-50%, -20px)';
+                setTimeout(() => toast.remove(), 500);
+            }
+        }, 2500);
+    </script>
 </body>
 </html>
 """
@@ -528,7 +807,7 @@ CART_HTML = """
     </div>
 
     <a href="/" class="back">← Back to Shop</a>
-    <h2>Shopping Cart</h2>
+    <h2>Shopping Cart & Checkout</h2>
     {% if cart %}
         <div class="box">
             {% for p_id, item in cart.items() %}
@@ -661,7 +940,7 @@ CART_HTML = """
                     "contact": delPhone
                 },
                 "theme": {
-                    "color": "#111111"
+                    "color": "#ff4757"
                 }
             };
             var rzp1 = new Razorpay(options);
@@ -848,14 +1127,53 @@ def home():
     cart = session.get('cart', {})
     cart_count = sum(item['qty'] for item in cart.values())
     user = session.get('user')
-    return render_template_string(HOME_HTML, products=filtered_products, cart_count=cart_count, user=user, logo_url=STORE_LOGO_URL)
+    return render_template_string(HOME_HTML, products=filtered_products, cart_count=cart_count, user=user, logo_url=STORE_LOGO_URL, email=CUSTOMER_CARE_EMAIL)
 
 @app.route('/product/<int:product_id>', strict_slashes=False)
 def product_detail(product_id):
     product = next((p for p in PRODUCTS if p['id'] == product_id), None)
     if not product:
         return redirect(url_for('home'))
-    return render_template_string(PRODUCT_DETAIL_HTML, product=product, products=PRODUCTS)
+    return render_template_string(PRODUCT_DETAIL_HTML, product=product, products=PRODUCTS, email=CUSTOMER_CARE_EMAIL)
+
+@app.route('/add_to_cart/<int:product_id>', strict_slashes=False)
+def add_to_cart(product_id):
+    product = next((p for p in PRODUCTS if p['id'] == product_id), None)
+    if product:
+        cart = session.get('cart', {})
+        p_id_str = str(product_id)
+        if p_id_str in cart:
+            cart[p_id_str]['qty'] += 1
+        else:
+            cart[p_id_str] = {
+                "id": product['id'],
+                "name": product['name'],
+                "price": product['price'],
+                "image": product['image'],
+                "qty": 1
+            }
+        session['cart'] = cart
+        flash(f"Added '{product['name']}' to your cart!")
+    return redirect(request.referrer or url_for('home'))
+
+@app.route('/buy_now/<int:product_id>', strict_slashes=False)
+def buy_now(product_id):
+    product = next((p for p in PRODUCTS if p['id'] == product_id), None)
+    if product:
+        cart = session.get('cart', {})
+        p_id_str = str(product_id)
+        if p_id_str in cart:
+            cart[p_id_str]['qty'] += 1
+        else:
+            cart[p_id_str] = {
+                "id": product['id'],
+                "name": product['name'],
+                "price": product['price'],
+                "image": product['image'],
+                "qty": 1
+            }
+        session['cart'] = cart
+    return redirect(url_for('cart'))
 
 @app.route('/login', strict_slashes=False)
 def login():
@@ -890,26 +1208,6 @@ def logout():
     session.pop('user', None)
     flash("Logged out successfully!")
     return redirect(url_for('home'))
-
-@app.route('/add_to_cart/<int:product_id>', strict_slashes=False)
-def add_to_cart(product_id):
-    product = next((p for p in PRODUCTS if p['id'] == product_id), None)
-    if product:
-        cart = session.get('cart', {})
-        p_id_str = str(product_id)
-        if p_id_str in cart:
-            cart[p_id_str]['qty'] += 1
-        else:
-            cart[p_id_str] = {
-                "id": product['id'],
-                "name": product['name'],
-                "price": product['price'],
-                "image": product['image'],
-                "qty": 1
-            }
-        session['cart'] = cart
-        flash(f"Added '{product['name']}' to your cart!")
-    return redirect(request.referrer or url_for('home'))
 
 @app.route('/update_qty/<string:product_id>/<string:action>', strict_slashes=False)
 def update_qty(product_id, action):

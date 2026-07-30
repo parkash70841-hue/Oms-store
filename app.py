@@ -1,4 +1,5 @@
 import os
+import random
 import requests
 from flask import Flask, render_template_string, request, redirect, url_for, session, flash
 from datetime import datetime
@@ -31,10 +32,6 @@ def send_telegram_notification(title, details):
 # ==========================================
 # DATA & PRODUCTS
 # ==========================================
-USERS = {
-    "om@example.com": {"name": "Om Prakash", "password": "password123", "phone": "07973813354"}
-}
-
 PRODUCTS = [
     {
         "id": 1,
@@ -95,7 +92,7 @@ PRODUCTS = [
 ]
 
 # ==========================================
-# HTML TEMPLATES
+# HTML TEMPLATES WITH APP-STYLE BOTTOM NAV
 # ==========================================
 HOME_HTML = """
 <!DOCTYPE html>
@@ -105,35 +102,48 @@ HOME_HTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; background:#f4f4f4; color:#333; }
-        header { background:#111; color:#fff; padding:12px; display:flex; flex-direction:column; gap:10px; }
-        .top-row { display:flex; justify-content:space-between; align-items:center; }
-        .logo { font-size:18px; font-weight:bold; }
-        .logo span { background:#e17055; padding:2px 6px; border-radius:3px; font-size:11px; }
-        .search-box { display:flex; width:100%; }
-        .search-box input { width:100%; padding:9px 12px; border:none; border-radius:6px 0 0 6px; font-size:14px; outline:none; }
-        .search-box button { background:#e17055; color:white; border:none; padding:9px 14px; border-radius:0 6px 6px 0; cursor:pointer; font-weight:bold; }
-        .nav-links { display:flex; gap:6px; }
-        .nav-links a { color:#fff; text-decoration:none; background:#222; padding:6px 10px; border-radius:5px; font-size:12px; font-weight:500; }
-        .banner { background:linear-gradient(90deg, #ff4757, #ff6b81); color:white; text-align:center; padding:9px; font-size:12px; font-weight:bold; letter-spacing:0.3px; }
-        .cat-bar { display:flex; gap:8px; padding:10px; overflow-x:auto; background:#fff; border-bottom:1px solid #ddd; }
-        .cat-btn { background:#111; color:#fff; padding:6px 14px; border-radius:20px; text-decoration:none; font-size:12px; white-space:nowrap; }
-        .grid { display:grid; grid-template-columns: 1fr 1fr; gap:10px; padding:10px; max-width:800px; margin:auto; }
-        .card { background:#fff; border-radius:10px; padding:10px; position:relative; box-shadow:0 2px 5px rgba(0,0,0,0.05); display:flex; flex-direction:column; justify-content:space-between; }
-        .badge { position:absolute; top:10px; left:10px; background:gold; color:#000; font-size:10px; font-weight:bold; padding:2px 6px; border-radius:4px; z-index:1; }
-        .card img { width:100%; height:120px; object-fit:cover; border-radius:6px; cursor:pointer; }
-        .title { font-size:13px; font-weight:600; margin:6px 0 3px; height:32px; overflow:hidden; text-decoration:none; color:#222; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
-        .rating { color:#ffa500; font-size:11px; margin-bottom:3px; }
-        .price { font-size:14px; font-weight:bold; color:#d63031; margin:2px 0; }
-        .mrp { font-size:10px; color:#888; text-decoration:line-through; }
-        .disc { font-size:11px; color:green; font-weight:bold; }
-        .del-info { font-size:10px; color:#27ae60; font-weight:600; margin:4px 0 8px; }
-        .btn { display:block; width:100%; background:#e17055; color:white; text-align:center; padding:9px 0; border:none; border-radius:6px; text-decoration:none; font-weight:bold; font-size:12px; cursor:pointer; margin-top:auto; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin:0; padding-bottom: 70px; background:#f1f2f6; color:#333; }
         
-        .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; }
-        .toast { background: rgba(46, 213, 115, 0.95); backdrop-filter: blur(10px); color: white; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); display: flex; align-items: center; gap: 8px; animation: slideIn 0.4s ease forwards, fadeOut 0.4s 2.6s forwards; }
-        @keyframes slideIn { from { transform: translateY(-30px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+        /* App-Style Header */
+        header { background: #111; color: #fff; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+        .top-row { display: flex; justify-content: space-between; align-items: center; }
+        .logo { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+        .logo span { background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; }
+        .cart-icon { position: relative; color: white; text-decoration: none; font-size: 20px; }
+        .cart-badge { position: absolute; top: -6px; right: -10px; background: #ff4757; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; }
+
+        /* Search Bar */
+        .search-box { display: flex; width: 100%; }
+        .search-box input { width: 100%; padding: 10px 14px; border: none; border-radius: 8px 0 0 8px; font-size: 13px; outline: none; }
+        .search-box button { background: #ff4757; color: white; border: none; padding: 10px 14px; border-radius: 0 8px 8px 0; cursor: pointer; font-weight: bold; }
+
+        /* Category Bar */
+        .cat-bar { display: flex; gap: 8px; padding: 10px 14px; overflow-x: auto; background: #fff; border-bottom: 1px solid #e1e2e6; }
+        .cat-btn { background: #f1f2f6; color: #222; padding: 6px 14px; border-radius: 20px; text-decoration: none; font-size: 12px; font-weight: 600; white-space: nowrap; }
+        .cat-btn.active { background: #111; color: #fff; }
+
+        /* Product Grid */
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; padding: 10px; max-width: 800px; margin: auto; }
+        .card { background: #fff; border-radius: 10px; padding: 10px; position: relative; box-shadow: 0 2px 5px rgba(0,0,0,0.04); display: flex; flex-direction: column; justify-content: space-between; }
+        .badge { position: absolute; top: 10px; left: 10px; background: gold; color: #000; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 4px; z-index: 1; }
+        .card img { width: 100%; height: 120px; object-fit: cover; border-radius: 6px; }
+        .title { font-size: 13px; font-weight: 600; margin: 6px 0 3px; height: 32px; overflow: hidden; text-decoration: none; color: #222; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .rating { color: #ffa500; font-size: 11px; margin-bottom: 3px; }
+        .price { font-size: 14px; font-weight: bold; color: #d63031; margin: 2px 0; }
+        .mrp { font-size: 10px; color: #888; text-decoration: line-through; }
+        .disc { font-size: 11px; color: green; font-weight: bold; }
+        .del-info { font-size: 10px; color: #27ae60; font-weight: 600; margin: 4px 0 8px; }
+        .btn { display: block; width: 100%; background: #e17055; color: white; text-align: center; padding: 9px 0; border: none; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: auto; }
+
+        /* FIXED Flipkart/Amazon Style Bottom Navigation Bar */
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #718096; font-size: 10px; font-weight: 600; }
+        .nav-item.active { color: #ff4757; }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
+
+        /* Modern Toast */
+        .toast-container { position: fixed; top: 70px; right: 20px; z-index: 9999; }
+        .toast { background: rgba(46, 213, 115, 0.95); backdrop-filter: blur(10px); color: white; padding: 12px 20px; border-radius: 8px; font-size: 13px; font-weight: 600; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); }
     </style>
 </head>
 <body>
@@ -150,27 +160,16 @@ HOME_HTML = """
     <header>
         <div class="top-row">
             <div class="logo">Om's Store <span>Plus</span></div>
-            <div class="nav-links">
-                {% if user %}
-                    <a href="#">👤 {{ user.name }}</a>
-                    <a href="/logout">Logout</a>
-                {% else %}
-                    <a href="/login">🔑 Login</a>
-                {% endif %}
-                <a href="/orders">📦 Orders</a>
-                <a href="/cart">🛒 ({{ cart_count }})</a>
-            </div>
+            <a href="/cart" class="cart-icon">🛒 <span class="cart-badge">{{ cart_count }}</span></a>
         </div>
         <form action="/" method="GET" class="search-box">
-            <input type="text" name="q" placeholder="Search products..." value="{{ request.args.get('q', '') }}">
+            <input type="text" name="q" placeholder="Search for products, brands..." value="{{ request.args.get('q', '') }}">
             <button type="submit">🔍</button>
         </form>
     </header>
 
-    <div class="banner">🏷️ FREE Express Delivery on all orders today!</div>
-
     <div class="cat-bar">
-        <a href="/" class="cat-btn">All Items</a>
+        <a href="/" class="cat-btn active">All Categories</a>
         <a href="/?cat=Audio" class="cat-btn">Audio</a>
         <a href="/?cat=Wearables" class="cat-btn">Wearables</a>
         <a href="/?cat=Accessories" class="cat-btn">Accessories</a>
@@ -190,41 +189,18 @@ HOME_HTML = """
         </div>
         {% endfor %}
     </div>
-</body>
-</html>
-"""
 
-PRODUCT_DETAIL_HTML = """
-<!DOCTYPE html>
-<html>
-<head>
-    <title>{{ product.name }} - Om's Store</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f4f4f4; margin:0; padding:15px; color:#333; }
-        .container { max-width: 600px; margin: auto; background: white; border-radius: 10px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
-        .back { color:#333; text-decoration:none; display:inline-block; margin-bottom:15px; font-weight:bold; }
-        img { width: 100%; height: 260px; object-fit: cover; border-radius: 8px; }
-        .title { font-size: 20px; font-weight: bold; margin: 15px 0 5px; }
-        .price-section { font-size: 22px; font-weight: bold; color: #d63031; margin: 10px 0; }
-        .mrp { font-size: 14px; color: #888; text-decoration: line-through; margin-left: 10px; }
-        .desc { font-size: 14px; color: #555; line-height: 1.5; margin: 15px 0; }
-        .del { background: #e8f8f0; color: #27ae60; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; font-size: 13px; }
-        .btn { background: #e17055; color: white; padding: 12px; text-align: center; display: block; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 20px; }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <a href="/" class="back">← Back to Store</a>
-        <img src="{{ product.image }}">
-        <div class="title">{{ product.name }}</div>
-        <div class="rating">★ {{ product.rating }} ({{ product.reviews }} reviews)</div>
-        <div class="price-section">₹{{ product.price }} <span class="mrp">₹{{ product.mrp }}</span> <span style="font-size:14px; color:green;">({{ product.discount }})</span></div>
-        <div class="del">🚚 {{ product.delivery }}</div>
-        <h3>Product Description</h3>
-        <div class="desc">{{ product.description }}</div>
-        <a href="/add_to_cart/{{ product.id }}" class="btn">ADD TO CART</a>
-    </div>
+    <!-- App Bottom Nav Bar -->
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item active"><span>🏠</span>Home</a>
+        <a href="/cart" class="nav-item"><span>🛒</span>Cart</a>
+        <a href="/orders" class="nav-item"><span>📦</span>Orders</a>
+        {% if user %}
+            <a href="/logout" class="nav-item"><span>👤</span>Logout</a>
+        {% else %}
+            <a href="/login" class="nav-item"><span>🔑</span>Account</a>
+        {% endif %}
+    </nav>
 </body>
 </html>
 """
@@ -233,29 +209,54 @@ LOGIN_HTML = """
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login - Om's Store</title>
+    <title>OTP Verification - Om's Store</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f4f4f4; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
-        .card { background:white; padding:25px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.1); width:290px; }
-        input { width:100%; padding:10px; margin:8px 0; border:1px solid #ccc; border-radius:6px; box-sizing:border-box; }
-        .btn { width:100%; background:#111; color:white; padding:11px; border:none; border-radius:6px; font-weight:bold; cursor:pointer; margin-top:10px; }
-        .back { text-decoration:none; color:#555; font-size:12px; display:block; margin-bottom:15px; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background:#f1f2f6; display:flex; justify-content:center; align-items:center; height:100vh; margin:0; }
+        .card { background:white; padding:25px; border-radius:12px; box-shadow:0 4px 15px rgba(0,0,0,0.08); width:300px; text-align:center; }
+        input { width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; font-size:14px; }
+        .btn { width:100%; background:#111; color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:10px; font-size:14px; }
+        .back { text-decoration:none; color:#555; font-size:12px; display:block; margin-bottom:15px; text-align:left; }
+        
+        /* Modern Toast for OTP display */
+        .toast-container { position: fixed; top: 20px; right: 20px; left: 20px; display: flex; justify-content: center; z-index: 9999; pointer-events: none; }
+        .toast { background: rgba(46, 213, 115, 0.95); backdrop-filter: blur(10px); color: white; padding: 15px 25px; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); animation: slideDown 0.4s ease forwards; pointer-events: auto; }
+        @keyframes slideDown { from { transform: translateY(-50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
+    <!-- THIS IS WHERE THE OTP WILL POP UP -->
+    <div class="toast-container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="toast">🔔 {{ message }}</div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    </div>
+
     <div class="card">
         <a href="/" class="back">← Back to Store</a>
-        <h2>Customer Login</h2>
-        <form action="/login" method="POST">
-            <input type="email" name="email" placeholder="Email (om@example.com)" required><br>
-            <input type="password" name="password" placeholder="Password (password123)" required><br>
-            <button type="submit" class="btn">LOGIN</button>
+        <h2 style="margin-bottom:5px;">OTP Login</h2>
+        <p style="font-size:12px; color:#666; margin-bottom:20px;">Enter your Mobile Number or Email to receive an OTP</p>
+
+        {% if not otp_sent %}
+        <form action="/send_otp" method="POST">
+            <input type="text" name="identifier" placeholder="Mobile No or Email ID" required><br>
+            <button type="submit" class="btn">SEND OTP</button>
         </form>
+        {% else %}
+        <form action="/verify_otp" method="POST">
+            <input type="text" name="otp_input" placeholder="Enter 4-Digit OTP" maxlength="4" required style="letter-spacing: 5px; text-align:center; font-weight:bold; font-size:18px;"><br>
+            <button type="submit" class="btn" style="background:#27ae60;">VERIFY & LOGIN</button>
+        </form>
+        {% endif %}
     </div>
 </body>
 </html>
 """
+
 
 CART_HTML = """
 <!DOCTYPE html>
@@ -265,7 +266,7 @@ CART_HTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding:15px; background:#f4f4f4; max-width:600px; margin:auto; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding:15px; padding-bottom:70px; background:#f4f4f4; max-width:600px; margin:auto; }
         .box { background:white; padding:18px; border-radius:12px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
         .cart-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #eee; }
         .cart-item img { width:60px; height:60px; object-fit:cover; border-radius:8px; }
@@ -275,7 +276,6 @@ CART_HTML = """
         
         .qty-controls { display:flex; align-items:center; gap:8px; margin-top:6px; }
         .qty-btn { background:#f1f2f6; border:1px solid #ccc; width:26px; height:26px; border-radius:5px; display:flex; justify-content:center; align-items:center; font-weight:bold; text-decoration:none; color:#333; font-size:14px; }
-        .qty-btn:hover { background:#dfe4ea; }
         .qty-val { font-size:13px; font-weight:bold; min-width:18px; text-align:center; }
         .delete-btn { color:#e74c3c; text-decoration:none; font-size:16px; margin-left:auto; padding:4px; }
 
@@ -284,16 +284,18 @@ CART_HTML = """
         .pay-fields input { width:100%; padding:9px; margin:5px 0; border:1px solid #ccc; border-radius:6px; font-size:13px; }
         .btn { background:#27ae60; color:white; padding:14px; text-align:center; display:block; border-radius:8px; border:none; width:100%; font-size:16px; font-weight:bold; cursor:pointer; margin-top:10px; }
         .back { color:#333; text-decoration:none; display:inline-block; margin-bottom:12px; font-weight:bold; }
-        .del-badge { background:#e8f8f0; color:#27ae60; padding:8px 12px; border-radius:6px; font-size:12px; font-weight:bold; margin-bottom:12px; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #718096; font-size: 10px; font-weight: 600; }
+        .nav-item.active { color: #ff4757; }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
     <a href="/" class="back">← Back to Shop</a>
-    <h2>Shopping Cart ({{ cart|length }})</h2>
+    <h2>Shopping Cart</h2>
     {% if cart %}
         <div class="box">
-            <div class="del-badge">🚚 FREE Express Delivery Eligible</div>
-            
             {% for p_id, item in cart.items() %}
             <div class="cart-item">
                 <img src="{{ item.image }}">
@@ -319,7 +321,6 @@ CART_HTML = """
         <div class="box">
             <h3>Payment Method</h3>
             <form action="/checkout" method="POST">
-                
                 <div class="pay-option" onclick="selectPay('upi')">
                     <input type="radio" id="radio_upi" name="payment_method" value="UPI / Online" checked> 📱 <b>UPI Payment</b>
                     <div id="fields_upi" class="pay-fields" style="display:block;">
@@ -353,15 +354,21 @@ CART_HTML = """
     {% else %}
         <div class="box" style="text-align:center; padding:30px;">
             <p style="font-size:16px; color:#666;">Your cart is empty!</p>
-            <a href="/" style="background:#111; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; margin-top:10px; font-weight:bold;">Start Shopping</a>
+            <a href="/" style="background:#111; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:bold;">Start Shopping</a>
         </div>
     {% endif %}
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item"><span>🏠</span>Home</a>
+        <a href="/cart" class="nav-item active"><span>🛒</span>Cart</a>
+        <a href="/orders" class="nav-item"><span>📦</span>Orders</a>
+        <a href="/login" class="nav-item"><span>👤</span>Account</a>
+    </nav>
 
     <script>
         function selectPay(type) {
             document.getElementById('fields_upi').style.display = 'none';
             document.getElementById('fields_card').style.display = 'none';
-            
             if (type === 'upi') {
                 document.getElementById('radio_upi').checked = true;
                 document.getElementById('fields_upi').style.display = 'block';
@@ -385,28 +392,24 @@ ORDERS_HTML = """
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         * { box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding:15px; background:#f4f4f4; max-width:600px; margin:auto; }
-        .order-card { background:white; border-radius:12px; padding:18px; margin-bottom:15px; box-shadow:0 3px 10px rgba(0,0,0,0.05); border:1px solid #eef2f5; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding:15px; padding-bottom:70px; background:#f4f4f4; max-width:600px; margin:auto; }
+        .order-card { background:white; border-radius:12px; padding:18px; margin-bottom:15px; box-shadow:0 3px 10px rgba(0,0,0,0.05); }
         .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
-        .order-id { font-weight:bold; font-size:14px; color:#2d3436; }
-        
         .badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:bold; }
         .badge-active { background:#e8f8f0; color:#27ae60; }
         .badge-cancelled { background:#ffe0e0; color:#e74c3c; }
-        .badge-returned { background:#fff3e0; color:#e67e22; }
-
-        .timeline { display:flex; justify-content:space-between; margin:15px 0; padding:10px 0; border-top:1px solid #f1f2f6; border-bottom:1px solid #f1f2f6; font-size:11px; text-align:center; color:#a4b0be; }
-        .timeline .step { flex:1; position:relative; }
-        .timeline .step.active { color:#27ae60; font-weight:bold; }
-
         .item-row { display:flex; justify-content:space-between; font-size:13px; margin:6px 0; color:#485460; }
         .total-row { display:flex; justify-content:space-between; font-weight:bold; font-size:15px; margin-top:12px; padding-top:10px; border-top:1px dashed #ddd; color:#d63031; }
-
         .action-row { display:flex; gap:10px; margin-top:15px; }
         .btn-action { flex:1; text-align:center; padding:9px; border-radius:6px; text-decoration:none; font-size:12px; font-weight:bold; color:white; }
         .btn-cancel { background:#ff4757; }
         .btn-return { background:#ffa502; }
         .back { color:#333; text-decoration:none; display:inline-block; margin-bottom:12px; font-weight:bold; }
+
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background: #ffffff; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); z-index: 1000; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; text-decoration: none; color: #718096; font-size: 10px; font-weight: 600; }
+        .nav-item.active { color: #ff4757; }
+        .nav-item span { font-size: 18px; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -417,25 +420,15 @@ ORDERS_HTML = """
         <div class="order-card">
             <div class="order-header">
                 <div>
-                    <div class="order-id">Order #{{ loop.index }}</div>
+                    <b>Order #{{ loop.index }}</b><br>
                     <small style="color:#888;">{{ o['date'] }}</small>
                 </div>
                 {% if o['status'] == 'Cancelled' %}
                     <span class="badge badge-cancelled">Cancelled</span>
-                {% elif o['status'] == 'Return Requested' %}
-                    <span class="badge badge-returned">Return Requested</span>
                 {% else %}
                     <span class="badge badge-active">Out for Delivery</span>
                 {% endif %}
             </div>
-
-            {% if o['status'] == 'Active' %}
-            <div class="timeline">
-                <div class="step active">✔ Placed</div>
-                <div class="step active">🚚 Shipping</div>
-                <div class="step">📦 Delivery</div>
-            </div>
-            {% endif %}
 
             <div style="margin:10px 0;">
                 {% for item in o['order_items'] %}
@@ -444,11 +437,6 @@ ORDERS_HTML = """
                     <span>₹{{ item['price'] * item['qty'] }}</span>
                 </div>
                 {% endfor %}
-            </div>
-
-            <div style="font-size:12px; color:#636e72; background:#f8f9fa; padding:10px; border-radius:6px; margin-top:10px;">
-                💳 <b>Payment:</b> {{ o['payment'] }} {% if o.get('upi_id') %}({{ o['upi_id'] }}){% endif %}<br>
-                📍 <b>Address:</b> {{ o['address'] }}
             </div>
 
             <div class="total-row">
@@ -467,15 +455,21 @@ ORDERS_HTML = """
     {% else %}
         <div class="order-card" style="text-align:center; padding:30px;">
             <p style="color:#666;">No orders placed yet!</p>
-            <a href="/" style="background:#111; color:white; padding:10px 20px; border-radius:6px; text-decoration:none; display:inline-block; font-weight:bold;">Start Shopping</a>
         </div>
     {% endif %}
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item"><span>🏠</span>Home</a>
+        <a href="/cart" class="nav-item"><span>🛒</span>Cart</a>
+        <a href="/orders" class="nav-item active"><span>📦</span>Orders</a>
+        <a href="/login" class="nav-item"><span>👤</span>Account</a>
+    </nav>
 </body>
 </html>
 """
 
 # ==========================================
-# ROUTES & LOGIC
+# ROUTES & LOGIC WITH OTP SYSTEM
 # ==========================================
 @app.route('/')
 def home():
@@ -493,25 +487,52 @@ def home():
     user = session.get('user')
     return render_template_string(HOME_HTML, products=filtered_products, cart_count=cart_count, user=user)
 
-@app.route('/product/<int:product_id>')
-def product_detail(product_id):
-    product = next((p for p in PRODUCTS if p['id'] == product_id), None)
-    if not product:
-        return redirect(url_for('home'))
-    return render_template_string(PRODUCT_DETAIL_HTML, product=product)
-
-@app.route('/login', methods=['GET', 'POST'])
+@app.route('/login')
 def login():
-    if request.method == 'POST':
-        email = request.form.get('email')
-        password = request.form.get('password')
-        if email in USERS and USERS[email]['password'] == password:
-            session['user'] = USERS[email]
-            flash("Logged in successfully!")
-            return redirect(url_for('home'))
-        else:
-            flash("Invalid credentials!")
-    return render_template_string(LOGIN_HTML)
+    return render_template_string(LOGIN_HTML, otp_sent=False)
+
+@app.route('/send_otp', methods=['POST'])
+def send_otp():
+    identifier = request.form.get('identifier', '').strip()
+    
+    # 1. Check if input is empty
+    if not identifier:
+        flash("Please enter a valid Mobile Number or Email!")
+        return render_template_string(LOGIN_HTML, otp_sent=False)
+
+    # 2. Basic validation check (must be 10 digits OR a valid email format)
+    is_phone = identifier.isdigit() and len(identifier) == 10
+    is_email = "@" in identifier and "." in identifier
+
+    if not (is_phone or is_email):
+        flash("Invalid format! Enter a 10-digit mobile number or valid email.")
+        return render_template_string(LOGIN_HTML, otp_sent=False)
+
+    # 3. Check against registered users (optional restriction)
+    # If you want to allow ANY valid number/email to register/login, you can remove this block.
+    registered_users = ["07973813354", "om@example.com", "9876543210"]
+    if identifier not in registered_users:
+        flash("Number/Email not registered! Please use a registered account.")
+        return render_template_string(LOGIN_HTML, otp_sent=False)
+
+    # If valid & registered -> Generate OTP
+    otp = str(random.randint(1000, 9999))
+    session['generated_otp'] = otp
+    session['user_identifier'] = identifier
+    flash(f"Your OTP is: {otp}")
+    return render_template_string(LOGIN_HTML, otp_sent=True)
+
+
+@app.route('/verify_otp', methods=['POST'])
+def verify_otp():
+    user_otp = request.form.get('otp_input')
+    if user_otp == session.get('generated_otp'):
+        session['user'] = {"name": session.get('user_identifier'), "phone": session.get('user_identifier')}
+        flash("Logged in successfully!")
+        return redirect(url_for('home'))
+    else:
+        flash("Invalid OTP! Try again.")
+        return render_template_string(LOGIN_HTML, otp_sent=True)
 
 @app.route('/logout')
 def logout():
@@ -578,7 +599,6 @@ def checkout():
     total = sum(item['price'] * item['qty'] for item in cart.values())
     
     user = session.get('user', {"name": "Om Prakash", "phone": "07973813354"})
-
     order_items_list = list(cart.values())
 
     new_order = {
@@ -602,15 +622,8 @@ def checkout():
     
     details = (
         f"*Customer:* {new_order['customer_name']}\n"
-        f"*Phone:* {new_order['customer_phone']}\n"
         f"*Payment Method:* {payment_method}\n"
-    )
-    if upi_id:
-        details += f"*UPI ID:* `{upi_id}`\n"
-        
-    details += (
-        f"*Total Paid:* ₹{total}\n"
-        f"*Delivery Status:* FREE Express Shipping\n\n"
+        f"*Total Paid:* ₹{total}\n\n"
         f"*Items:*\n{items_summary}\n\n"
         f"*Address:* {new_order['address']}"
     )
@@ -627,9 +640,8 @@ def cancel_order(order_id):
         session['orders'] = orders
         
         o = orders[order_id]
-        details = f"⚠️ *Order Cancelled by Customer*\n\n*Customer:* {o['customer_name']}\n*Amount:* ₹{o['total']}\n*Date:* {o['date']}"
+        details = f"⚠️ *Order Cancelled*\n\n*Customer:* {o['customer_name']}\n*Amount:* ₹{o['total']}"
         send_telegram_notification("❌ *Order Cancellation Alert*", details)
-        
         flash("Order cancelled successfully.")
     return redirect(url_for('orders'))
 
@@ -641,21 +653,14 @@ def return_order(order_id):
         session['orders'] = orders
         
         o = orders[order_id]
-        details = f"🔄 *Return Requested by Customer*\n\n*Customer:* {o['customer_name']}\n*Amount:* ₹{o['total']}\n*Date:* {o['date']}"
+        details = f"🔄 *Return Requested*\n\n*Customer:* {o['customer_name']}\n*Amount:* ₹{o['total']}"
         send_telegram_notification("📦 *Return Request Alert*", details)
-        
         flash("Return request submitted.")
     return redirect(url_for('orders'))
 
 @app.route('/orders')
 def orders():
-    cart = session.get('cart', {})
-    cart_count = sum(item['qty'] for item in cart.values())
-    return render_template_string(
-        ORDERS_HTML, 
-        orders=session.get('orders', []), 
-        cart_count=cart_count
-    )
+    return render_template_string(ORDERS_HTML, orders=session.get('orders', []))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)

@@ -18,8 +18,8 @@ TELEGRAM_CHAT_ID = "7867296083"
 ADMIN_PASSWORD = "admin_password_2026"
 
 # Live Razorpay Credentials
-RAZORPAY_KEY_ID = "rzp_live_TJdBMB9ISZN6AA"
-RAZORPAY_KEY_SECRET = "Lg3o5c8OkjEfApIMzD38iKPP"
+RAZORPAY_KEY_ID = "rzp_live_TJitd3iSUTjRvj"
+RAZORPAY_KEY_SECRET = "cy9j7FsRBGeneGYybhPP28as"
 
 razor_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 

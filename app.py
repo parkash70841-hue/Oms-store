@@ -974,13 +974,6 @@ def return_order(order_id):
         flash("Return request submitted.")
     return redirect(url_for('orders'))
 
-@app.route('/orders')
-def orders():
-    return render_template_string(ORDERS_HTML, orders=session.get('orders', []), products=PRODUCTS)
-
-# ==========================================
-# ADMIN PORTAL (DELIVERY UPDATES & CANCELLATIONS)
-# ==========================================
 @app.route('/admin')
 def admin_dashboard():
     if not session.get('is_admin'):
@@ -999,54 +992,104 @@ def admin_dashboard():
         <!DOCTYPE html>
         <html>
         <head>
-            <title>Admin Dashboard - Om's Store</title>
+            <title>Admin Panel - Om's Store</title>
             <meta name="viewport" content="width=device-width, initial-scale=1">
             <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding:15px; background:#f4f4f4; max-width:700px; margin:auto; }
-                .order-box { background:white; border-radius:10px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+                .box { background:white; border-radius:10px; padding:18px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+                .form-input { width:100%; padding:10px; margin:6px 0; border:1px solid #ccc; border-radius:6px; font-size:13px; box-sizing:border-box; }
+                .btn-add { background:#27ae60; color:white; border:none; padding:12px; border-radius:6px; font-weight:bold; width:100%; cursor:pointer; font-size:14px; margin-top:8px; }
                 .status-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:bold; background:#e8f8f0; color:#27ae60; }
                 .btn-status { background:#3498db; color:white; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold; display:inline-block; margin-bottom:4px; }
                 .btn-cancel { background:#e74c3c; color:white; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold; display:inline-block; }
+                .p-item { display:flex; align-items:center; justify-content:space-between; padding:10px 0; border-bottom:1px solid #eee; }
+                .p-item img { width:45px; height:45px; object-fit:cover; border-radius:6px; }
             </style>
         </head>
         <body>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-                <h2>👑 Admin Order Controls</h2>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <h2>👑 Admin Control Panel</h2>
                 <a href="/admin_logout" style="color:#777; text-decoration:none; font-size:13px; font-weight:bold;">Logout</a>
             </div>
 
-            {% if orders %}
-                {% for o in orders %}
-                <div class="order-box">
-                    <div style="display:flex; justify-content:space-between; align-items:center;">
-                        <b>Order #{{ loop.index }}</b>
-                        <span class="status-badge">{{ o['status'] }}</span>
+            <!-- ADD PRODUCT FORM -->
+            <div class="box">
+                <h3 style="margin-top:0;">➕ Add New Product to Store</h3>
+                <form action="/admin/add_product" method="POST">
+                    <input type="text" name="name" class="form-input" placeholder="Product Title (e.g. Wireless Earbuds)" required>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" step="0.01" name="price" class="form-input" placeholder="Selling Price (₹)" required>
+                        <input type="number" step="0.01" name="mrp" class="form-input" placeholder="MRP Price (₹)">
                     </div>
-                    <p style="font-size:13px; margin:8px 0; color:#555;">
-                        <b>Customer:</b> {{ o['customer_name'] }} ({{ o['customer_phone'] }})<br>
-                        <b>Total:</b> ₹{{ o['total'] }} | <b>Payment:</b> {{ o['payment'] }}<br>
-                        <b>Address:</b> {{ o['address'] }}
-                    </p>
+                    <div style="display:flex; gap:8px;">
+                        <select name="category" class="form-input">
+                            <option value="Audio">Audio</option>
+                            <option value="Wearables">Wearables</option>
+                            <option value="Accessories">Accessories</option>
+                        </select>
+                        <input type="text" name="tag" class="form-input" placeholder="Badge Tag (e.g. Bestseller, 20% OFF)">
+                    </div>
+                    <input type="url" name="image" class="form-input" placeholder="Image URL (Unsplash or Direct Image Link)" required>
+                    <input type="text" name="delivery" class="form-input" placeholder="Delivery Info (e.g. FREE Delivery Tomorrow)">
+                    <textarea name="description" class="form-input" placeholder="Product Description..." style="height:60px; font-family:inherit;"></textarea>
+                    <button type="submit" class="btn-add">PUBLISH PRODUCT TO STORE</button>
+                </form>
+            </div>
 
-                    {% if o['status'] != 'Cancelled' %}
-                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;">
-                        <a href="/admin/update_status/{{ loop.index0 }}/Packed" class="btn-status">📦 Packed</a>
-                        <a href="/admin/update_status/{{ loop.index0 }}/Shipped" class="btn-status">🚚 Shipped</a>
-                        <a href="/admin/update_status/{{ loop.index0 }}/Out for Delivery" class="btn-status" style="background:#e67e22;">🛵 Out for Delivery</a>
-                        <a href="/admin/update_status/{{ loop.index0 }}/Delivered" class="btn-status" style="background:#27ae60;">✅ Delivered</a>
-                        <a href="/admin/cancel_order/{{ loop.index0 }}" class="btn-cancel" onclick="return confirm('Cancel order?')">❌ Cancel Order</a>
+            <!-- MANAGE EXISTING PRODUCTS -->
+            <div class="box">
+                <h3 style="margin-top:0;">📦 Existing Products</h3>
+                {% for p in products %}
+                <div class="p-item">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <img src="{{ p.image }}">
+                        <div>
+                            <b>{{ p.name }}</b><br>
+                            <small style="color:#d63031; font-weight:bold;">₹{{ p.price }}</small>
+                        </div>
                     </div>
-                    {% endif %}
+                    <a href="/admin/delete_product/{{ p.id }}" style="color:#e74c3c; text-decoration:none; font-weight:bold; font-size:13px;" onclick="return confirm('Remove product?')">🗑️ Delete</a>
                 </div>
                 {% endfor %}
-            {% else %}
-                <p>No orders placed yet.</p>
-            {% endif %}
-            <br>
-            <a href="/" style="color:#333; font-weight:bold; text-decoration:none;">← Back to Shop</a>
+            </div>
+
+            <!-- ORDERS MANAGEMENT -->
+            <div class="box">
+                <h3 style="margin-top:0;">📋 Customer Orders</h3>
+                {% if orders %}
+                    {% for o in orders %}
+                    <div style="border-bottom:1px solid #eee; padding-bottom:12px; margin-bottom:12px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center;">
+                            <b>Order #{{ loop.index }}</b>
+                            <span class="status-badge">{{ o['status'] }}</span>
+                        </div>
+                        <p style="font-size:13px; margin:6px 0; color:#555;">
+                            <b>Customer:</b> {{ o['customer_name'] }} ({{ o['customer_phone'] }})<br>
+                            <b>Total:</b> ₹{{ o['total'] }} | <b>Payment:</b> {{ o['payment'] }}<br>
+                            <b>Address:</b> {{ o['address'] }}
+                        </p>
+
+                        {% if o['status'] != 'Cancelled' %}
+                        <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:8px;">
+                            <a href="/admin/update_status/{{ loop.index0 }}/Packed" class="btn-status">📦 Packed</a>
+                            <a href="/admin/update_status/{{ loop.index0 }}/Shipped" class="btn-status">🚚 Shipped</a>
+                            <a href="/admin/update_status/{{ loop.index0 }}/Out for Delivery" class="btn-status" style="background:#e67e22;">🛵 Out for Delivery</a>
+                            <a href="/admin/update_status/{{ loop.index0 }}/Delivered" class="btn-status" style="background:#27ae60;">✅ Delivered</a>
+                            <a href="/admin/cancel_order/{{ loop.index0 }}" class="btn-cancel" onclick="return confirm('Cancel order?')">❌ Cancel</a>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p style="font-size:13px; color:#777;">No orders placed yet.</p>
+                {% endif %}
+            </div>
+
+            <a href="/" style="color:#333; font-weight:bold; text-decoration:none;">← Back to Public Store</a>
         </body>
         </html>
-    """)
+    """, products=PRODUCTS)
+
 
 @app.route('/admin_login', methods=['POST'])
 def admin_login():
@@ -1104,6 +1147,56 @@ def admin_cancel_order(order_id):
         )
         send_telegram_notification("⚠️ *Admin Order Cancellation*", details)
         flash("Order cancelled by Admin.")
+    return redirect(url_for('admin_dashboard'))
+    
+    # ==========================================
+# ADMIN PRODUCT MANAGEMENT
+# ==========================================
+@app.route('/admin/add_product', methods=['POST'])
+def admin_add_product():
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_dashboard'))
+
+    name = request.form.get('name', '').strip()
+    category = request.form.get('category', 'Audio')
+    price = float(request.form.get('price', 0))
+    mrp = float(request.form.get('mrp', price * 1.2))
+    discount = request.form.get('discount', '10% OFF')
+    tag = request.form.get('tag', 'New Arrival')
+    image = request.form.get('image', 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&q=80')
+    delivery = request.form.get('delivery', 'FREE Delivery within 2 Days')
+    description = request.form.get('description', 'High-quality product from Om\'s Store.')
+
+    # Generate a unique product ID
+    new_id = max([p['id'] for p in PRODUCTS], default=0) + 1
+
+    new_product = {
+        "id": new_id,
+        "name": name,
+        "category": category,
+        "price": price,
+        "mrp": mrp,
+        "discount": discount,
+        "rating": 5.0,
+        "reviews": 1,
+        "image": image,
+        "tag": tag,
+        "delivery": delivery,
+        "description": description
+    }
+
+    PRODUCTS.append(new_product)
+    flash(f"🎉 Product '{name}' added successfully!")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/delete_product/<int:product_id>')
+def admin_delete_product(product_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_dashboard'))
+
+    global PRODUCTS
+    PRODUCTS = [p for p in PRODUCTS if p['id'] != product_id]
+    flash("🗑️ Product removed from store.")
     return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':

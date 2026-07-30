@@ -21,6 +21,9 @@ ADMIN_PASSWORD = "admin_password_2026"
 RAZORPAY_KEY_ID = "rzp_live_TJitd3iSUTjRvj"
 RAZORPAY_KEY_SECRET = "cy9j7FsRBGeneGYybhPP28as"
 
+# Custom Logo URL
+STORE_LOGO_URL = "https://cdn-icons-png.flaticon.com/512/3081/3081559.png"
+
 razor_client = razorpay.Client(auth=(RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET))
 
 def send_telegram_notification(title, details):
@@ -106,40 +109,43 @@ PRODUCTS = [
 ]
 
 # ==========================================
-# COMMON CSS WITH FIXED NAV ALIGNMENT
+# COMMON CSS - STRICT VIEWPORT & BOTTOM PIN
 # ==========================================
 COMMON_STYLE = """
 <style>
     * { box-sizing: border-box; }
+    html { height: 100%; }
     body { 
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
         margin: 0; 
-        padding-bottom: 75px; 
+        padding: 0;
+        padding-bottom: 70px !important; 
+        min-height: 100vh;
         background: #f1f2f6; 
         color: #333; 
-        animation: fadeIn 0.4s cubic-bezier(0.39, 0.575, 0.565, 1) both;
+        animation: fadeIn 0.3s cubic-bezier(0.39, 0.575, 0.565, 1) both;
     }
 
     @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
+        from { opacity: 0; transform: translateY(6px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Fixed Perfectly Centered Bottom Nav Bar */
+    /* Fixed Bottom Nav Bar - Locked flush to screen bottom */
     .bottom-nav { 
-        position: fixed; 
-        bottom: 0; 
-        left: 0; 
-        right: 0; 
-        width: 100%; 
-        height: 60px;
-        background: #ffffff; 
-        border-top: 1px solid #e2e8f0; 
-        display: flex; 
-        justify-content: space-around; 
-        align-items: center; 
-        box-shadow: 0 -4px 15px rgba(0,0,0,0.06); 
-        z-index: 1000; 
+        position: fixed !important; 
+        bottom: 0 !important; 
+        left: 0 !important; 
+        right: 0 !important; 
+        width: 100% !important; 
+        height: 60px !important;
+        background: #ffffff !important; 
+        border-top: 1px solid #e2e8f0 !important; 
+        display: flex !important; 
+        justify-content: space-around !important; 
+        align-items: center !important; 
+        box-shadow: 0 -4px 15px rgba(0,0,0,0.08) !important; 
+        z-index: 99999 !important; 
     }
     .nav-item { 
         flex: 1; 
@@ -152,11 +158,18 @@ COMMON_STYLE = """
         font-size: 11px; 
         font-weight: 600; 
         height: 100%;
-        transition: color 0.2s ease, transform 0.2s ease;
+        transition: color 0.2s ease;
     }
     .nav-item.active { color: #ff4757; }
-    .nav-item span { font-size: 20px; line-height: 1; margin-bottom: 3px; display: block; }
-    .nav-item:active { transform: scale(0.92); }
+    .nav-item span { 
+        font-size: 20px; 
+        height: 22px;
+        line-height: 22px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 2px;
+    }
 
     /* Toast Notification */
     .toast-container { position: fixed; top: 70px; right: 20px; z-index: 9999; }
@@ -182,12 +195,13 @@ HOME_HTML = """
 <html>
 <head>
     <title>Om's Store</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     """ + COMMON_STYLE + """
     <style>
         header { background: #111; color: #fff; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; position: sticky; top: 0; z-index: 100; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
         .top-row { display: flex; justify-content: space-between; align-items: center; }
-        .logo { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+        .logo { font-size: 18px; font-weight: 800; display: flex; align-items: center; gap: 8px; }
+        .logo img { width: 26px; height: 26px; object-fit: contain; }
         .logo span { background: #ff4757; color: white; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 900; }
         .cart-icon { position: relative; color: white; text-decoration: none; font-size: 20px; }
         .cart-badge { position: absolute; top: -6px; right: -10px; background: #ff4757; color: white; font-size: 10px; font-weight: bold; padding: 2px 6px; border-radius: 10px; }
@@ -222,8 +236,8 @@ HOME_HTML = """
         .mrp { font-size: 10px; color: #888; text-decoration: line-through; }
         .disc { font-size: 11px; color: green; font-weight: bold; }
         .del-info { font-size: 10px; color: #27ae60; font-weight: 600; margin: 4px 0 8px; }
-        .btn { display: block; width: 100%; background: #e17055; color: white; text-align: center; padding: 9px 0; border: none; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: auto; transition: background 0.2s; }
-        .btn:hover { background: #d63031; }
+        .btn { display: block; width: 100%; background: #111111; color: white; text-align: center; padding: 10px 0; border: none; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 12px; cursor: pointer; margin-top: auto; transition: background 0.2s; }
+        .btn:hover { background: #333333; }
     </style>
 </head>
 <body>
@@ -239,7 +253,10 @@ HOME_HTML = """
 
     <header>
         <div class="top-row">
-            <div class="logo">Om's Store <span>Plus</span></div>
+            <div class="logo">
+                <img src="{{ logo_url }}" alt="Logo">
+                Om's Store <span>Plus</span>
+            </div>
             <a href="/cart" class="cart-icon">🛒 <span class="cart-badge">{{ cart_count }}</span></a>
         </div>
         <form action="/" method="GET" class="search-box">
@@ -289,10 +306,10 @@ PRODUCT_DETAIL_HTML = """
 <html>
 <head>
     <title>{{ product.name }} - Om's Store</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     """ + COMMON_STYLE + """
     <style>
-        body { padding:15px; padding-bottom:80px; }
+        body { padding:15px; }
         .container { max-width: 600px; margin: auto; background: white; border-radius: 12px; padding: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.06); }
         .back { color:#333; text-decoration:none; display:inline-block; margin-bottom:15px; font-weight:bold; }
         img { width: 100%; height: 260px; object-fit: cover; border-radius: 8px; }
@@ -301,7 +318,17 @@ PRODUCT_DETAIL_HTML = """
         .mrp { font-size: 14px; color: #888; text-decoration: line-through; margin-left: 10px; }
         .desc { font-size: 14px; color: #555; line-height: 1.5; margin: 15px 0; }
         .del { background: #e8f8f0; color: #27ae60; padding: 10px; border-radius: 6px; font-weight: bold; margin-bottom: 15px; font-size: 13px; }
-        .btn { background: #e17055; color: white; padding: 12px; text-align: center; display: block; border-radius: 6px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 20px; }
+        .btn { background: #111111; color: white; padding: 14px; text-align: center; display: block; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 20px; transition: background 0.2s; }
+        .btn:hover { background: #333333; }
+
+        /* SUGGESTIONS SECTION INSIDE PRODUCT DETAIL */
+        .sugg-title { font-size:16px; font-weight:bold; margin:30px 0 12px 0; color:#222; border-top:1px solid #eee; padding-top:20px; }
+        .sugg-grid { display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; }
+        .sugg-card { background:#f8f9fa; border:1px solid #e2e8f0; border-radius:8px; padding:10px; min-width:140px; text-align:center; flex-shrink:0; }
+        .sugg-card img { width:100%; height:80px; object-fit:cover; border-radius:6px; }
+        .sugg-name { font-size:11px; font-weight:bold; height:28px; overflow:hidden; margin:5px 0; color:#222; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; text-decoration:none; }
+        .sugg-price { color:#d63031; font-weight:bold; font-size:12px; }
+        .sugg-btn { background:#111111; color:white; border:none; padding:6px 10px; border-radius:4px; font-size:10px; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px; }
     </style>
 </head>
 <body>
@@ -315,6 +342,21 @@ PRODUCT_DETAIL_HTML = """
         <h3>Product Description</h3>
         <div class="desc">{{ product.description }}</div>
         <a href="/add_to_cart/{{ product.id }}" class="btn">ADD TO CART</a>
+
+        <!-- OTHER PRODUCT SUGGESTIONS -->
+        <div class="sugg-title">🔥 You Might Also Like</div>
+        <div class="sugg-grid">
+            {% for p in products %}
+            {% if p.id != product.id %}
+            <div class="sugg-card">
+                <a href="/product/{{ p.id }}"><img src="{{ p.image }}"></a>
+                <a href="/product/{{ p.id }}" class="sugg-name">{{ p.name }}</a>
+                <div class="sugg-price">₹{{ p.price }}</div>
+                <a href="/add_to_cart/{{ p.id }}" class="sugg-btn">+ ADD</a>
+            </div>
+            {% endif %}
+            {% endfor %}
+        </div>
     </div>
 
     <nav class="bottom-nav">
@@ -332,10 +374,10 @@ LOGIN_HTML = """
 <html>
 <head>
     <title>OTP Verification - Om's Store</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     """ + COMMON_STYLE + """
     <style>
-        body { display:flex; justify-content:center; align-items:center; height:100vh; padding: 0; }
+        body { display:flex; justify-content:center; align-items:center; min-height:100vh; padding: 0; }
         .card { background:white; padding:25px; border-radius:12px; box-shadow:0 4px 20px rgba(0,0,0,0.08); width:300px; text-align:center; }
         input { width:100%; padding:12px; margin:10px 0; border:1px solid #ccc; border-radius:8px; box-sizing:border-box; font-size:14px; }
         .btn { width:100%; background:#111; color:white; padding:12px; border:none; border-radius:8px; font-weight:bold; cursor:pointer; margin-top:10px; font-size:14px; }
@@ -370,6 +412,13 @@ LOGIN_HTML = """
         </form>
         {% endif %}
     </div>
+
+    <nav class="bottom-nav">
+        <a href="/" class="nav-item"><span>🏠</span>Home</a>
+        <a href="/cart" class="nav-item"><span>🛒</span>Cart</a>
+        <a href="/orders" class="nav-item"><span>📦</span>Orders</a>
+        <a href="/login" class="nav-item active"><span>👤</span>Account</a>
+    </nav>
 </body>
 </html>
 """
@@ -379,11 +428,11 @@ CART_HTML = """
 <html>
 <head>
     <title>Your Cart & Checkout</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     """ + COMMON_STYLE + """
     <style>
-        body { padding:15px; padding-bottom:80px; max-width:600px; margin:auto; }
+        body { padding:15px; max-width:600px; margin:auto; }
         .box { background:white; padding:18px; border-radius:12px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.05); }
         .cart-item { display:flex; align-items:center; gap:12px; padding:12px 0; border-bottom:1px solid #eee; }
         .cart-item img { width:60px; height:60px; object-fit:cover; border-radius:8px; }
@@ -403,11 +452,12 @@ CART_HTML = """
 
         .sugg-title { font-size:15px; font-weight:bold; margin:20px 0 10px 0; color:#222; }
         .sugg-grid { display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; }
-        .sugg-card { background:white; border-radius:8px; padding:10px; min-width:140px; box-shadow:0 2px 5px rgba(0,0,0,0.05); text-align:center; }
+        .sugg-card { background:white; border-radius:8px; padding:10px; min-width:140px; box-shadow:0 2px 5px rgba(0,0,0,0.05); text-align:center; flex-shrink:0; }
         .sugg-card img { width:100%; height:80px; object-fit:cover; border-radius:6px; }
-        .sugg-name { font-size:11px; font-weight:bold; height:28px; overflow:hidden; margin:5px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+        .sugg-name { font-size:11px; font-weight:bold; height:28px; overflow:hidden; margin:5px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; color:#222; text-decoration:none; }
         .sugg-price { color:#d63031; font-weight:bold; font-size:12px; }
-        .sugg-btn { background:#111; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:10px; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px; }
+        .sugg-btn { background:#111111; color:white; border:none; padding:6px 10px; border-radius:4px; font-size:10px; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px; transition: background 0.2s; }
+        .sugg-btn:hover { background:#333333; }
     </style>
 </head>
 <body>
@@ -438,7 +488,6 @@ CART_HTML = """
         </div>
 
         <form id="checkout-form" onsubmit="handleCheckout(event)">
-            <!-- EDITABLE SHIPPING ADDRESS FORM -->
             <div class="box">
                 <h3 style="margin-top:0;">📍 Delivery Address</h3>
                 <input type="text" id="delivery_name" name="delivery_name" class="form-input" placeholder="Full Name" required>
@@ -446,7 +495,6 @@ CART_HTML = """
                 <textarea id="delivery_address" name="delivery_address" class="form-input" placeholder="Flat / House No., Street, Landmark, City, Pincode" required style="height:60px; font-family:inherit;"></textarea>
             </div>
 
-            <!-- PAYMENT OPTIONS -->
             <div class="box">
                 <h3 style="margin-top:0;">💳 Payment Method</h3>
                 
@@ -468,13 +516,12 @@ CART_HTML = """
         </div>
     {% endif %}
 
-    <!-- MORE SUGGESTIONS AT THE BOTTOM -->
     <div class="sugg-title">🔥 You Might Also Like</div>
     <div class="sugg-grid">
         {% for p in products %}
         <div class="sugg-card">
-            <img src="{{ p.image }}">
-            <div class="sugg-name">{{ p.name }}</div>
+            <a href="/product/{{ p.id }}"><img src="{{ p.image }}"></a>
+            <a href="/product/{{ p.id }}" class="sugg-name">{{ p.name }}</a>
             <div class="sugg-price">₹{{ p.price }}</div>
             <a href="/add_to_cart/{{ p.id }}" class="sugg-btn">+ ADD</a>
         </div>
@@ -549,7 +596,7 @@ CART_HTML = """
                         "contact": delPhone
                     },
                     "theme": {
-                        "color": "#ff4757"
+                        "color": "#111111"
                     }
                 };
                 var rzp1 = new Razorpay(options);
@@ -580,10 +627,10 @@ ORDERS_HTML = """
 <html>
 <head>
     <title>Your Orders</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
     """ + COMMON_STYLE + """
     <style>
-        body { padding:15px; padding-bottom:80px; max-width:600px; margin:auto; }
+        body { padding:15px; max-width:600px; margin:auto; }
         .order-card { background:white; border-radius:12px; padding:18px; margin-bottom:15px; box-shadow:0 3px 10px rgba(0,0,0,0.05); cursor:pointer; position:relative; transition: transform 0.2s; }
         .order-card:hover { transform: translateY(-2px); }
         .order-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
@@ -600,11 +647,12 @@ ORDERS_HTML = """
 
         .sugg-title { font-size:15px; font-weight:bold; margin:20px 0 10px 0; color:#222; }
         .sugg-grid { display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; }
-        .sugg-card { background:white; border-radius:8px; padding:10px; min-width:140px; box-shadow:0 2px 5px rgba(0,0,0,0.05); text-align:center; }
+        .sugg-card { background:white; border-radius:8px; padding:10px; min-width:140px; box-shadow:0 2px 5px rgba(0,0,0,0.05); text-align:center; flex-shrink:0; }
         .sugg-card img { width:100%; height:80px; object-fit:cover; border-radius:6px; }
-        .sugg-name { font-size:11px; font-weight:bold; height:28px; overflow:hidden; margin:5px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; }
+        .sugg-name { font-size:11px; font-weight:bold; height:28px; overflow:hidden; margin:5px 0; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; color:#222; text-decoration:none; }
         .sugg-price { color:#d63031; font-weight:bold; font-size:12px; }
-        .sugg-btn { background:#111; color:white; border:none; padding:5px 8px; border-radius:4px; font-size:10px; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px; }
+        .sugg-btn { background:#111111; color:white; border:none; padding:6px 10px; border-radius:4px; font-size:10px; font-weight:bold; text-decoration:none; display:inline-block; margin-top:5px; transition: background 0.2s; }
+        .sugg-btn:hover { background:#333333; }
     </style>
 </head>
 <body>
@@ -691,8 +739,8 @@ ORDERS_HTML = """
     <div class="sugg-grid">
         {% for p in products %}
         <div class="sugg-card">
-            <img src="{{ p.image }}">
-            <div class="sugg-name">{{ p.name }}</div>
+            <a href="/product/{{ p.id }}"><img src="{{ p.image }}"></a>
+            <a href="/product/{{ p.id }}" class="sugg-name">{{ p.name }}</a>
             <div class="sugg-price">₹{{ p.price }}</div>
             <a href="/add_to_cart/{{ p.id }}" class="sugg-btn">+ ADD</a>
         </div>
@@ -719,7 +767,7 @@ ORDERS_HTML = """
 """
 
 # ==========================================
-# ROUTES & LOGIC (WITH STRICT SLASH DISABLE)
+# ROUTES & LOGIC
 # ==========================================
 @app.route('/', strict_slashes=False)
 def home():
@@ -735,14 +783,14 @@ def home():
     cart = session.get('cart', {})
     cart_count = sum(item['qty'] for item in cart.values())
     user = session.get('user')
-    return render_template_string(HOME_HTML, products=filtered_products, cart_count=cart_count, user=user)
+    return render_template_string(HOME_HTML, products=filtered_products, cart_count=cart_count, user=user, logo_url=STORE_LOGO_URL)
 
 @app.route('/product/<int:product_id>', strict_slashes=False)
 def product_detail(product_id):
     product = next((p for p in PRODUCTS if p['id'] == product_id), None)
     if not product:
         return redirect(url_for('home'))
-    return render_template_string(PRODUCT_DETAIL_HTML, product=product)
+    return render_template_string(PRODUCT_DETAIL_HTML, product=product, products=PRODUCTS)
 
 @app.route('/login', strict_slashes=False)
 def login():
@@ -1002,7 +1050,7 @@ def admin_dashboard():
         <html>
         <head>
             <title>Admin Panel - Om's Store</title>
-            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
             <style>
                 body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding:15px; background:#f4f4f4; max-width:700px; margin:auto; }
                 .box { background:white; border-radius:10px; padding:18px; margin-bottom:20px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }

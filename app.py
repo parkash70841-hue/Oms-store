@@ -17,7 +17,7 @@ TELEGRAM_CHAT_ID = "7867296083"
 # Admin Password
 ADMIN_PASSWORD = "admin_password_2026"
 
-# Live Razorpay Credentials
+# Live Razorpay Credentials (UPDATED)
 RAZORPAY_KEY_ID = "rzp_live_TJitd3iSUTjRvj"
 RAZORPAY_KEY_SECRET = "cy9j7FsRBGeneGYybhPP28as"
 
@@ -109,7 +109,7 @@ PRODUCTS = [
 ]
 
 # ==========================================
-# COMMON CSS - STRICT VIEWPORT & BOTTOM PIN
+# COMMON CSS & ANIMATED CART TOAST
 # ==========================================
 COMMON_STYLE = """
 <style>
@@ -131,7 +131,7 @@ COMMON_STYLE = """
         to { opacity: 1; transform: translateY(0); }
     }
 
-    /* Fixed Bottom Nav Bar - Locked flush to screen bottom */
+    /* Fixed Bottom Nav Bar */
     .bottom-nav { 
         position: fixed !important; 
         bottom: 0 !important; 
@@ -171,18 +171,46 @@ COMMON_STYLE = """
         margin-bottom: 2px;
     }
 
-    /* Toast Notification */
-    .toast-container { position: fixed; top: 70px; right: 20px; z-index: 9999; }
+    /* COOL ANIMATED ADD TO CART POPUP */
+    .toast-container { position: fixed; top: 15px; left: 50%; transform: translateX(-50%); z-index: 999999; width: 90%; max-width: 380px; }
+    
+    @keyframes slidePop {
+        0% { transform: scale(0.7) translateY(-50px); opacity: 0; }
+        60% { transform: scale(1.05) translateY(5px); opacity: 1; }
+        100% { transform: scale(1) translateY(0); opacity: 1; }
+    }
+
+    @keyframes cartBounce {
+        0%, 100% { transform: scale(1) rotate(0deg); }
+        30% { transform: scale(1.3) rotate(-12deg); }
+        60% { transform: scale(1.2) rotate(12deg); }
+    }
+
     .toast { 
-        background: rgba(46, 213, 115, 0.95); 
-        backdrop-filter: blur(10px); 
-        color: white; 
-        padding: 12px 20px; 
-        border-radius: 8px; 
+        background: #111111;
+        color: #ffffff; 
+        padding: 12px 18px; 
+        border-radius: 50px; 
         font-size: 13px; 
-        font-weight: 600; 
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15); 
-        animation: fadeIn 0.3s ease;
+        font-weight: 700; 
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35); 
+        animation: slidePop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 2px solid #27ae60;
+    }
+
+    .toast-icon {
+        background: #27ae60;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+        animation: cartBounce 0.6s ease 0.2s;
     }
 </style>
 """
@@ -245,7 +273,10 @@ HOME_HTML = """
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         {% for message in messages %}
-          <div class="toast">✨ {{ message }}</div>
+          <div class="toast">
+            <div class="toast-icon">🛒</div>
+            <div>{{ message }}</div>
+          </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
@@ -321,7 +352,6 @@ PRODUCT_DETAIL_HTML = """
         .btn { background: #111111; color: white; padding: 14px; text-align: center; display: block; border-radius: 8px; text-decoration: none; font-weight: bold; font-size: 16px; margin-top: 20px; transition: background 0.2s; }
         .btn:hover { background: #333333; }
 
-        /* SUGGESTIONS SECTION INSIDE PRODUCT DETAIL */
         .sugg-title { font-size:16px; font-weight:bold; margin:30px 0 12px 0; color:#222; border-top:1px solid #eee; padding-top:20px; }
         .sugg-grid { display:flex; gap:10px; overflow-x:auto; padding-bottom:10px; }
         .sugg-card { background:#f8f9fa; border:1px solid #e2e8f0; border-radius:8px; padding:10px; min-width:140px; text-align:center; flex-shrink:0; }
@@ -332,6 +362,19 @@ PRODUCT_DETAIL_HTML = """
     </style>
 </head>
 <body>
+    <div class="toast-container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="toast">
+            <div class="toast-icon">🛒</div>
+            <div>{{ message }}</div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    </div>
+
     <div class="container">
         <a href="/" class="back">← Back to Store</a>
         <img src="{{ product.image }}">
@@ -343,7 +386,6 @@ PRODUCT_DETAIL_HTML = """
         <div class="desc">{{ product.description }}</div>
         <a href="/add_to_cart/{{ product.id }}" class="btn">ADD TO CART</a>
 
-        <!-- OTHER PRODUCT SUGGESTIONS -->
         <div class="sugg-title">🔥 You Might Also Like</div>
         <div class="sugg-grid">
             {% for p in products %}
@@ -389,7 +431,10 @@ LOGIN_HTML = """
     {% with messages = get_flashed_messages() %}
       {% if messages %}
         {% for message in messages %}
-          <div class="toast">🔔 {{ message }}</div>
+          <div class="toast">
+            <div class="toast-icon">🔔</div>
+            <div>{{ message }}</div>
+          </div>
         {% endfor %}
       {% endif %}
     {% endwith %}
@@ -461,6 +506,19 @@ CART_HTML = """
     </style>
 </head>
 <body>
+    <div class="toast-container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="toast">
+            <div class="toast-icon">📦</div>
+            <div>{{ message }}</div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    </div>
+
     <a href="/" class="back">← Back to Shop</a>
     <h2>Shopping Cart</h2>
     {% if cart %}
@@ -502,8 +560,9 @@ CART_HTML = """
                     <input type="radio" id="radio_online" name="payment_method" value="Online Payment" checked> 💳 <b>Online Payment (Razorpay: UPI / Cards / Netbanking)</b>
                 </div>
 
-                <div class="pay-option">
-                    <input type="radio" id="radio_cod" name="payment_method" value="Cash on Delivery"> 💵 <b>Cash on Delivery (COD)</b>
+                <div class="pay-option" style="opacity: 0.6; cursor: not-allowed; background: #f1f2f6;">
+                    <input type="radio" id="radio_cod" name="payment_method" value="Cash on Delivery" disabled> 💵 <b style="color:#777;">Cash on Delivery (COD)</b>
+                    <div style="color: #e74c3c; font-size: 11px; font-weight: bold; margin-top: 4px; margin-left: 22px;">❌ Not available in your area</div>
                 </div>
 
                 <button type="submit" class="btn" id="pay-btn">PAY & PLACE ORDER (₹{{ total }})</button>
@@ -539,83 +598,68 @@ CART_HTML = """
         async function handleCheckout(event) {
             event.preventDefault();
             const payBtn = document.getElementById('pay-btn');
-            const isOnline = document.getElementById('radio_online').checked;
 
             const delName = document.getElementById('delivery_name').value;
             const delPhone = document.getElementById('delivery_phone').value;
             const delAddress = document.getElementById('delivery_address').value;
 
-            if (isOnline) {
-                payBtn.innerText = "Opening Payment Gateway...";
-                payBtn.disabled = true;
+            payBtn.innerText = "Opening Payment Gateway...";
+            payBtn.disabled = true;
 
-                const res = await fetch('/create_razorpay_order', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ name: delName, phone: delPhone, address: delAddress })
-                });
-                const data = await res.json();
+            const res = await fetch('/create_razorpay_order', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ name: delName, phone: delPhone, address: delAddress })
+            });
+            const data = await res.json();
 
-                if (data.error) {
-                    alert("Razorpay Error: " + data.error);
-                    payBtn.innerText = "PAY & PLACE ORDER (₹{{ total }})";
-                    payBtn.disabled = false;
-                    return;
-                }
-
-                var options = {
-                    "key": data.key,
-                    "amount": data.amount,
-                    "currency": "INR",
-                    "name": "Om's Store",
-                    "description": "Order Payment",
-                    "order_id": data.id,
-                    "handler": async function (response) {
-                        const verifyRes = await fetch('/verify_payment', {
-                            method: 'POST',
-                            headers: {'Content-Type': 'application/json'},
-                            body: JSON.stringify({
-                                razorpay_order_id: response.razorpay_order_id,
-                                razorpay_payment_id: response.razorpay_payment_id,
-                                razorpay_signature: response.razorpay_signature,
-                                delivery_name: delName,
-                                delivery_phone: delPhone,
-                                delivery_address: delAddress,
-                                payment_method: "Online (Razorpay)"
-                            })
-                        });
-                        const verifyData = await verifyRes.json();
-                        if (verifyData.status === 'success') {
-                            window.location.href = "/orders";
-                        } else {
-                            alert("Payment Verification Failed!");
-                        }
-                    },
-                    "prefill": {
-                        "name": delName,
-                        "contact": delPhone
-                    },
-                    "theme": {
-                        "color": "#111111"
-                    }
-                };
-                var rzp1 = new Razorpay(options);
-                rzp1.open();
+            if (data.error) {
+                alert("Razorpay Error: " + data.error);
                 payBtn.innerText = "PAY & PLACE ORDER (₹{{ total }})";
                 payBtn.disabled = false;
-            } else {
-                const formData = new FormData();
-                formData.append('delivery_name', delName);
-                formData.append('delivery_phone', delPhone);
-                formData.append('delivery_address', delAddress);
-                formData.append('payment_method', 'Cash on Delivery');
-
-                await fetch('/checkout_cod', {
-                    method: 'POST',
-                    body: formData
-                });
-                window.location.href = "/orders";
+                return;
             }
+
+            var options = {
+                "key": data.key,
+                "amount": data.amount,
+                "currency": "INR",
+                "name": "Om's Store",
+                "description": "Order Payment",
+                "order_id": data.id,
+                "handler": async function (response) {
+                    const verifyRes = await fetch('/verify_payment', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_signature: response.razorpay_signature,
+                            delivery_name: delName,
+                            delivery_phone: delPhone,
+                            delivery_address: delAddress,
+                            payment_method: "Online (Razorpay)"
+                        })
+                    });
+                    const verifyData = await verifyRes.json();
+                    if (verifyData.status === 'success') {
+                        window.location.href = "/orders";
+                    } else {
+                        alert("Payment Verification Failed!");
+                    }
+                },
+                "prefill": {
+                    "name": delName,
+                    "contact": delPhone
+                },
+                "theme": {
+                    "color": "#111111"
+                }
+            };
+            var rzp1 = new Razorpay(options);
+            rzp1.open();
+            payBtn.innerText = "PAY & PLACE ORDER (₹{{ total }})";
+            payBtn.disabled = false;
         }
     </script>
 </body>
@@ -656,6 +700,19 @@ ORDERS_HTML = """
     </style>
 </head>
 <body>
+    <div class="toast-container">
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        {% for message in messages %}
+          <div class="toast">
+            <div class="toast-icon">📦</div>
+            <div>{{ message }}</div>
+          </div>
+        {% endfor %}
+      {% endif %}
+    {% endwith %}
+    </div>
+
     <a href="/" style="color:#333; text-decoration:none; display:inline-block; margin-bottom:12px; font-weight:bold;">← Back to Shop</a>
     <h2>My Orders Dashboard</h2>
     
@@ -843,7 +900,7 @@ def add_to_cart(product_id):
                 "qty": 1
             }
         session['cart'] = cart
-        flash(f"{product['name']} added to cart!")
+        flash(f"Added '{product['name']}' to your cart!")
     return redirect(request.referrer or url_for('home'))
 
 @app.route('/update_qty/<string:product_id>/<string:action>', strict_slashes=False)
@@ -954,51 +1011,6 @@ def verify_payment():
         return jsonify({'status': 'success'})
     except Exception as e:
         return jsonify({'status': 'failure', 'error': str(e)}), 400
-
-@app.route('/checkout_cod', methods=['POST'], strict_slashes=False)
-def checkout_cod():
-    cart = session.get('cart', {})
-    if not isinstance(cart, dict) or not cart:
-        return jsonify({'error': 'Cart empty'}), 400
-
-    del_name = request.form.get('delivery_name', '').strip()
-    del_phone = request.form.get('delivery_phone', '').strip()
-    del_address = request.form.get('delivery_address', '').strip()
-    full_shipping_info = f"{del_name} ({del_phone}), {del_address}"
-
-    total = sum(item['price'] * item['qty'] for item in cart.values())
-    order_items_list = list(cart.values())
-
-    new_order = {
-        "date": datetime.now().strftime("%d %b %Y, %I:%M %p"),
-        "order_items": order_items_list,
-        "total": total,
-        "customer_name": del_name,
-        "customer_phone": del_phone,
-        "payment": "Cash on Delivery",
-        "status": "Order Placed",
-        "address": full_shipping_info
-    }
-
-    orders = session.get('orders', [])
-    if not isinstance(orders, list):
-        orders = []
-    orders.append(new_order)
-    
-    session['orders'] = orders
-    session['cart'] = {}
-
-    items_summary = "\n".join([f"- {item['name']} x{item['qty']} (₹{item['price'] * item['qty']})" for item in order_items_list])
-    details = (
-        f"*Customer:* {del_name}\n"
-        f"*Phone:* {del_phone}\n"
-        f"*Payment Method:* Cash on Delivery\n"
-        f"*Total Paid:* ₹{total}\n\n"
-        f"*Items:*\n{items_summary}\n\n"
-        f"*Address:* {full_shipping_info}"
-    )
-    send_telegram_notification("💵 *New COD Order Received!*", details)
-    return jsonify({'status': 'success'})
 
 @app.route('/cancel_order/<int:order_id>', strict_slashes=False)
 def cancel_order(order_id):

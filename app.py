@@ -14,6 +14,9 @@ app.secret_key = 'oms_store_master_key_2026'
 TELEGRAM_BOT_TOKEN = "8988154095:AAHIoRgwHA08Mfw1viZFUPdeUpJyjF3dRTI"
 TELEGRAM_CHAT_ID = "7867296083"
 
+# Admin Password
+ADMIN_PASSWORD = "admin_password_2026"
+
 # Live Razorpay Credentials
 RAZORPAY_KEY_ID = "rzp_live_TJdBMB9ISZN6AA"
 RAZORPAY_KEY_SECRET = "Lg3o5c8OkjEfApIMzD38iKPP"
@@ -505,8 +508,8 @@ CART_HTML = """
                 const data = await res.json();
 
                 if (data.error) {
-                    alert(data.error);
-                    payBtn.innerText = "PAY & PLACE ORDER";
+                    alert("Razorpay Error: " + data.error);
+                    payBtn.innerText = "PAY & PLACE ORDER (₹{{ total }})";
                     payBtn.disabled = false;
                     return;
                 }
@@ -549,7 +552,7 @@ CART_HTML = """
                 };
                 var rzp1 = new Razorpay(options);
                 rzp1.open();
-                payBtn.innerText = "PAY & PLACE ORDER";
+                payBtn.innerText = "PAY & PLACE ORDER (₹{{ total }})";
                 payBtn.disabled = false;
             } else {
                 const formData = new FormData();
@@ -614,10 +617,17 @@ ORDERS_HTML = """
                     <b>Order #{{ loop.index }}</b><br>
                     <small style="color:#888;">{{ o['date'] }}</small>
                 </div>
+                
                 {% if o['status'] == 'Cancelled' %}
                     <span class="badge badge-cancelled">Cancelled</span>
+                {% elif o['status'] == 'Delivered' %}
+                    <span class="badge" style="background:#d4edda; color:#155724;">✅ Delivered</span>
+                {% elif o['status'] == 'Out for Delivery' %}
+                    <span class="badge" style="background:#fff3cd; color:#856404;">🛵 Out for Delivery</span>
+                {% elif o['status'] == 'Shipped' %}
+                    <span class="badge" style="background:#cce5ff; color:#004085;">🚚 Shipped</span>
                 {% else %}
-                    <span class="badge badge-active">Out for Delivery</span>
+                    <span class="badge badge-active">📦 {{ o['status'] }}</span>
                 {% endif %}
             </div>
 
@@ -660,7 +670,7 @@ ORDERS_HTML = """
                     <b>Delivery Address:</b> {{ o['address'] }}
                 </p>
 
-                {% if o['status'] == 'Active' %}
+                {% if o['status'] != 'Cancelled' and o['status'] != 'Delivered' %}
                 <div style="display:flex; gap:10px; margin-top:20px;">
                     <a href="/cancel_order/{{ loop.index0 }}" style="flex:1; background:#ff4757; color:white; text-align:center; padding:10px; border-radius:6px; text-decoration:none; font-weight:bold; font-size:12px;">Cancel Order</a>
                     <a href="/return_order/{{ loop.index0 }}" style="flex:1; background:#ffa502; color:white; text-align:center; padding:10px; border-radius:6px; text-decoration:none; font-weight:bold; font-size:12px;">Request Return</a>
@@ -868,7 +878,7 @@ def verify_payment():
             "customer_name": del_name,
             "customer_phone": del_phone,
             "payment": f"Online (Razorpay ID: {data['razorpay_payment_id']})",
-            "status": "Active",
+            "status": "Order Placed",
             "address": full_shipping_info
         }
 
@@ -916,7 +926,7 @@ def checkout_cod():
         "customer_name": del_name,
         "customer_phone": del_phone,
         "payment": "Cash on Delivery",
-        "status": "Active",
+        "status": "Order Placed",
         "address": full_shipping_info
     }
 
@@ -947,7 +957,7 @@ def cancel_order(order_id):
         orders[order_id]['status'] = 'Cancelled'
         session['orders'] = orders
         o = orders[order_id]
-        details = f"⚠️ *Order Cancelled*\n\n*Customer:* {o['customer_name']}\n*Amount:* ₹{o['total']}"
+        details = f"⚠️ *Order Cancelled by Customer*\n\n*Customer:* {o['customer_name']}\n*Amount:* ₹{o['total']}"
         send_telegram_notification("❌ *Order Cancellation Alert*", details)
         flash("Order cancelled successfully.")
     return redirect(url_for('orders'))
@@ -967,6 +977,134 @@ def return_order(order_id):
 @app.route('/orders')
 def orders():
     return render_template_string(ORDERS_HTML, orders=session.get('orders', []), products=PRODUCTS)
+
+# ==========================================
+# ADMIN PORTAL (DELIVERY UPDATES & CANCELLATIONS)
+# ==========================================
+@app.route('/admin')
+def admin_dashboard():
+    if not session.get('is_admin'):
+        return render_template_string("""
+            <div style="font-family:sans-serif; text-align:center; padding:50px 15px;">
+                <h2>🔐 Admin Login</h2>
+                <form action="/admin_login" method="POST">
+                    <input type="password" name="password" placeholder="Enter Admin Password" style="padding:10px; border:1px solid #ccc; border-radius:6px; font-size:14px;"><br><br>
+                    <button type="submit" style="background:#ff4757; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;">LOGIN</button>
+                </form>
+            </div>
+        """)
+    
+    orders = session.get('orders', [])
+    return render_template_string("""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <title>Admin Dashboard - Om's Store</title>
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <style>
+                body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding:15px; background:#f4f4f4; max-width:700px; margin:auto; }
+                .order-box { background:white; border-radius:10px; padding:15px; margin-bottom:15px; box-shadow:0 2px 8px rgba(0,0,0,0.06); }
+                .status-badge { padding:4px 10px; border-radius:20px; font-size:11px; font-weight:bold; background:#e8f8f0; color:#27ae60; }
+                .btn-status { background:#3498db; color:white; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold; display:inline-block; margin-bottom:4px; }
+                .btn-cancel { background:#e74c3c; color:white; padding:6px 10px; border-radius:6px; text-decoration:none; font-size:11px; font-weight:bold; display:inline-block; }
+            </style>
+        </head>
+        <body>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+                <h2>👑 Admin Order Controls</h2>
+                <a href="/admin_logout" style="color:#777; text-decoration:none; font-size:13px; font-weight:bold;">Logout</a>
+            </div>
+
+            {% if orders %}
+                {% for o in orders %}
+                <div class="order-box">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <b>Order #{{ loop.index }}</b>
+                        <span class="status-badge">{{ o['status'] }}</span>
+                    </div>
+                    <p style="font-size:13px; margin:8px 0; color:#555;">
+                        <b>Customer:</b> {{ o['customer_name'] }} ({{ o['customer_phone'] }})<br>
+                        <b>Total:</b> ₹{{ o['total'] }} | <b>Payment:</b> {{ o['payment'] }}<br>
+                        <b>Address:</b> {{ o['address'] }}
+                    </p>
+
+                    {% if o['status'] != 'Cancelled' %}
+                    <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;">
+                        <a href="/admin/update_status/{{ loop.index0 }}/Packed" class="btn-status">📦 Packed</a>
+                        <a href="/admin/update_status/{{ loop.index0 }}/Shipped" class="btn-status">🚚 Shipped</a>
+                        <a href="/admin/update_status/{{ loop.index0 }}/Out for Delivery" class="btn-status" style="background:#e67e22;">🛵 Out for Delivery</a>
+                        <a href="/admin/update_status/{{ loop.index0 }}/Delivered" class="btn-status" style="background:#27ae60;">✅ Delivered</a>
+                        <a href="/admin/cancel_order/{{ loop.index0 }}" class="btn-cancel" onclick="return confirm('Cancel order?')">❌ Cancel Order</a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            {% else %}
+                <p>No orders placed yet.</p>
+            {% endif %}
+            <br>
+            <a href="/" style="color:#333; font-weight:bold; text-decoration:none;">← Back to Shop</a>
+        </body>
+        </html>
+    """)
+
+@app.route('/admin_login', methods=['POST'])
+def admin_login():
+    if request.form.get('password') == ADMIN_PASSWORD:
+        session['is_admin'] = True
+        flash("Logged into Admin Portal!")
+    else:
+        flash("Invalid Admin Password!")
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin_logout')
+def admin_logout():
+    session.pop('is_admin', None)
+    return redirect(url_for('home'))
+
+@app.route('/admin/update_status/<int:order_id>/<string:new_status>')
+def admin_update_status(order_id, new_status):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_dashboard'))
+        
+    orders = session.get('orders', [])
+    if 0 <= order_id < len(orders):
+        orders[order_id]['status'] = new_status
+        session['orders'] = orders
+        
+        o = orders[order_id]
+        details = (
+            f"🚚 *Delivery Status Updated*\n\n"
+            f"*Order #:* {order_id + 1}\n"
+            f"*Customer:* {o['customer_name']}\n"
+            f"*New Status:* `{new_status}`\n"
+            f"*Phone:* {o['customer_phone']}"
+        )
+        send_telegram_notification("📦 *Order Tracking Update*", details)
+        flash(f"Order #{order_id + 1} marked as {new_status}!")
+        
+    return redirect(url_for('admin_dashboard'))
+
+@app.route('/admin/cancel_order/<int:order_id>')
+def admin_cancel_order(order_id):
+    if not session.get('is_admin'):
+        return redirect(url_for('admin_dashboard'))
+        
+    orders = session.get('orders', [])
+    if 0 <= order_id < len(orders):
+        orders[order_id]['status'] = 'Cancelled'
+        session['orders'] = orders
+        
+        o = orders[order_id]
+        details = (
+            f"❌ *Order # {order_id + 1} Cancelled by Admin*\n\n"
+            f"*Customer:* {o['customer_name']}\n"
+            f"*Phone:* {o['customer_phone']}\n"
+            f"*Amount:* ₹{o['total']}"
+        )
+        send_telegram_notification("⚠️ *Admin Order Cancellation*", details)
+        flash("Order cancelled by Admin.")
+    return redirect(url_for('admin_dashboard'))
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
